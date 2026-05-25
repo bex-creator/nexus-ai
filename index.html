@@ -112,12 +112,12 @@
             </div>
         </div>
 
-        <!-- User profile details & Sign-out / Session indicator -->
+        <!-- User profile details & Session indicator -->
         <div class="p-4 border-t border-[#303134] bg-[#1a1b1c] text-xs text-gray-400 flex items-center gap-3">
             <div class="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-white font-bold text-sm">U</div>
             <div class="flex-1 min-w-0">
-                <p class="font-medium text-gray-300 truncate" id="user-id-display">Connecting Account...</p>
-                <p class="text-[10px] text-gray-500">Cloud Sync Active</p>
+                <p class="font-medium text-gray-300 truncate" id="user-id-display">Local Offline User</p>
+                <p class="text-[10px] text-gray-500">IndexedDB Storage Active</p>
             </div>
         </div>
     </aside>
@@ -243,21 +243,8 @@
         </main>
     </div>
 
-    <!-- Firebase Script (Authentication and Firestore Persistence) -->
+    <!-- Local Offline Script (IndexedDB Persistence) -->
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, getDoc, collection, query, onSnapshot, addDoc, updateDoc, deleteDoc, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-        // Global environment variables provided by sandbox
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const firebaseConfig = JSON.parse(__firebase_config);
-
-        // Init services
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-
         // DOM Elements
         const chatContainer = document.getElementById('chat-container');
         const welcomeContainer = document.getElementById('welcome-container');
@@ -279,8 +266,7 @@
         // State Machine
         let isGenerating = false;
         let currentTypingBubble = null;
-        let activeChatId = null; // Currently selected document ID in cloud
-        let userAuth = null;
+        let activeChatId = null; 
 
         // Base instructions
         const SYSTEM_INSTRUCTIONS = "You are Nexus AI, a highly factual, extremely concise and straightforward assistant. Do NOT use emojis. Answer directly and cleanly. Keep responses short and avoid follow-up questions.";
@@ -310,17 +296,14 @@
             activeChatId = null;
             chatHistory = [{ role: "system", content: SYSTEM_INSTRUCTIONS }];
             
-            // Clean UI back to welcome screen
             chatContainer.innerHTML = '';
             chatContainer.classList.add('hidden');
             welcomeContainer.style.display = 'flex';
             userInput.value = '';
             userInput.focus();
 
-            // Refresh sidebar active styling
             highlightActiveChat(null);
 
-            // On mobile close navigation
             if (!sidebar.classList.contains('-translate-x-full')) {
                 toggleSidebar();
             }
@@ -328,55 +311,66 @@
 
         newChatBtn.addEventListener('click', createNewChat);
 
-        // Sync local chat state to Cloud (Firestore Rule 1 Compliance)
-        async function saveChatToCloud() {
-            if (!userAuth) return;
+        // --- IndexedDB Offline Storage Setup ---
+        let db;
+        const initDB = () => {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open("NexusOfflineDB", 1);
+                request.onupgradeneeded = (event) => {
+                    db = event.target.result;
+                    if (!db.objectStoreNames.contains('chats')) {
+                        db.createObjectStore('chats', { keyPath: 'id' });
+                    }
+                };
+                request.onsuccess = (event) => {
+                    db = event.target.result;
+                    resolve();
+                };
+                request.onerror = (event) => {
+                    console.error("IndexedDB error:", event.target.error);
+                    reject(event.target.error);
+                };
+            });
+        };
 
-            // Generate a readable title based on the first user query
+        // Sync local chat state to IndexedDB Offline Storage
+        function saveChatToLocalDB() {
+            if (!db) return;
+
             const firstUserQuery = chatHistory.find(msg => msg.role === 'user')?.content || "New Conversation";
             const cleanTitle = firstUserQuery.length > 28 ? firstUserQuery.substring(0, 25) + '...' : firstUserQuery;
 
-            // Prepare save object (must serialize nested systems properly)
+            if (!activeChatId) activeChatId = crypto.randomUUID();
+
             const chatPayload = {
+                id: activeChatId,
                 title: cleanTitle,
                 updatedAt: Date.now(),
-                history: chatHistory // Firestore supports primitive array objects cleanly
+                history: chatHistory 
             };
 
-            try {
-                if (activeChatId) {
-                    // Update existing
-                    const docRef = doc(db, 'artifacts', appId, 'users', userAuth.uid, 'chats', activeChatId);
-                    await setDoc(docRef, chatPayload, { merge: true });
-                } else {
-                    // Create new
-                    const collectionRef = collection(db, 'artifacts', appId, 'users', userAuth.uid, 'chats');
-                    const docRef = await addDoc(collectionRef, {
-                        ...chatPayload,
-                        createdAt: Date.now()
-                    });
-                    activeChatId = docRef.id;
-                    highlightActiveChat(activeChatId);
-                }
-            } catch (err) {
-                console.error("Cloud synchronization failed:", err);
-            }
+            const transaction = db.transaction(['chats'], 'readwrite');
+            const store = transaction.objectStore('chats');
+            store.put(chatPayload);
+
+            transaction.oncomplete = () => {
+                loadAllChats(); 
+            };
         }
 
-        // Delete conversation handler (Rule 1 Compliant)
-        async function deleteChatFromCloud(chatId, event) {
-            event.stopPropagation(); // Stop selection trigger
-            if (!userAuth) return;
+        // Delete conversation handler
+        function deleteChatFromLocalDB(chatId, event) {
+            event.stopPropagation();
+            if (!db) return;
 
-            try {
-                const docRef = doc(db, 'artifacts', appId, 'users', userAuth.uid, 'chats', chatId);
-                await deleteDoc(docRef);
-                if (activeChatId === chatId) {
-                    createNewChat();
-                }
-            } catch (err) {
-                console.error("Cloud destruction error:", err);
-            }
+            const transaction = db.transaction(['chats'], 'readwrite');
+            const store = transaction.objectStore('chats');
+            store.delete(chatId);
+
+            transaction.oncomplete = () => {
+                if (activeChatId === chatId) createNewChat();
+                loadAllChats();
+            };
         }
 
         // Highlight selection state in UI sidebar
@@ -394,18 +388,18 @@
         }
 
         // Load specific saved chat into UI
-        async function selectChat(chatId) {
-            if (!userAuth) return;
-            try {
-                const docRef = doc(db, 'artifacts', appId, 'users', userAuth.uid, 'chats', chatId);
-                const docSnap = await getDoc(docRef);
-                
-                if (docSnap.exists()) {
-                    const data = docSnap.data();
+        function selectChat(chatId) {
+            if (!db) return;
+            const transaction = db.transaction(['chats'], 'readonly');
+            const store = transaction.objectStore('chats');
+            const request = store.get(chatId);
+            
+            request.onsuccess = () => {
+                const data = request.result;
+                if (data) {
                     activeChatId = chatId;
                     chatHistory = data.history || [];
 
-                    // Rebuild UI conversation from array
                     chatContainer.innerHTML = '';
                     welcomeContainer.style.display = 'none';
                     chatContainer.classList.remove('hidden');
@@ -418,30 +412,23 @@
 
                     highlightActiveChat(chatId);
 
-                    // Close mobile sidebar menu if open
                     if (!sidebar.classList.contains('-translate-x-full')) {
                         toggleSidebar();
                     }
                 }
-            } catch (err) {
-                console.error("Could not fetch cloud data:", err);
-            }
+            };
         }
 
-        // Setup real-time listeners for navigation updates (Rule 1 & Rule 2 compliant - no compound orders)
-        function listenToSavedChats(userId) {
-            const collectionRef = collection(db, 'artifacts', appId, 'users', userId, 'chats');
-            
-            // Keep query perfectly simple to avoid complex indexing limits
-            onSnapshot(collectionRef, (snapshot) => {
+        // Load and render all saved chats
+        function loadAllChats() {
+            if (!db) return;
+            const transaction = db.transaction(['chats'], 'readonly');
+            const store = transaction.objectStore('chats');
+            const request = store.getAll();
+
+            request.onsuccess = () => {
                 chatsListContainer.innerHTML = '';
-
-                let chats = [];
-                snapshot.forEach(doc => {
-                    chats.push({ id: doc.id, ...doc.data() });
-                });
-
-                // Sort purely in memory to maintain extreme flexibility without complex queries (Rule 2)
+                const chats = request.result;
                 chats.sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
 
                 if (chats.length === 0) {
@@ -456,10 +443,8 @@
                         activeChatId === chat.id ? 'bg-[#2a2b2d] text-white' : 'text-gray-400 hover:bg-[#252627] hover:text-gray-200'
                     }`;
 
-                    // Click event loads chat
                     pill.addEventListener('click', () => selectChat(chat.id));
 
-                    // HTML structure containing title and trash deletion trigger
                     pill.innerHTML = `
                         <div class="flex items-center gap-2.5 min-w-0 flex-1">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4 text-gray-500 group-hover:text-indigo-400 transition-colors shrink-0"><path stroke-linecap="round" stroke-linejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 0 1 .865-.501 48.172 48.172 0 0 0 3.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0 0 12 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018Z" /></svg>
@@ -470,42 +455,19 @@
                         </button>
                     `;
 
-                    // Select and bind actual deletion logic safely
-                    pill.querySelector('button').addEventListener('click', (e) => deleteChatFromCloud(chat.id, e));
-
+                    pill.querySelector('button').addEventListener('click', (e) => deleteChatFromLocalDB(chat.id, e));
                     chatsListContainer.appendChild(pill);
                 });
-            }, (error) => {
-                console.error("Firestore listening broken:", error);
-            });
+                
+                // Keep UI highlight in sync
+                highlightActiveChat(activeChatId);
+            };
         }
 
-        // Initialize authentication flows (Rule 3 Compliance)
-        const initAuth = async () => {
-            try {
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    await signInWithCustomToken(auth, __initial_auth_token);
-                } else {
-                    await signInAnonymously(auth);
-                }
-            } catch (err) {
-                console.error("Authentication setup failed:", err);
-            }
-        };
-
-        // Start checking authentication state
-        onAuthStateChanged(auth, (user) => {
-            userAuth = user;
-            if (user) {
-                // Render truncated account token name to display bar
-                userIdDisplay.innerText = `ID: ${user.uid.substring(0, 8)}...`;
-                
-                // Fetch saved chats and establish reactive socket
-                listenToSavedChats(user.uid);
-            }
+        // Init Local Database on load
+        initDB().then(() => {
+            loadAllChats();
         });
-
-        initAuth();
 
         // Smoothly inject a message to the chat view
         function addMessage(text, isUser = false, isTyping = false) {
@@ -557,7 +519,6 @@
             import { pipeline, env, TextStreamer } from 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.0.0/dist/transformers.min.js';
 
             env.allowLocalModels = false;
-            // Support multiple CPU fallback cores
             env.backends.onnx.wasm.numThreads = navigator.hardwareConcurrency ? Math.min(navigator.hardwareConcurrency, 4) : 1;
 
             let aiPipeline = null;
@@ -598,7 +559,7 @@
 
                         const results = await aiPipeline(payload.chatHistory, {
                             max_new_tokens: 512,
-                            do_sample: false, // Strict deterministic answers to prevent model emojis/hallucinations
+                            do_sample: false, 
                             streamer: streamer
                         });
 
@@ -638,7 +599,6 @@
             }
 
             else if (action === 'ready') {
-                // UI transition from loader to main interface
                 speedIndicator.innerText = device === 'webgpu' ? 'WebGPU Accelerated 🚀' : 'CPU Computing Active';
                 loadingScreen.style.opacity = '0';
                 setTimeout(() => loadingScreen.style.display = 'none', 700);
@@ -671,8 +631,8 @@
                     }
                     chatHistory.push({ role: "assistant", content: currentTypingBubble.innerText });
                     
-                    // Fire update to Firestore instantly
-                    saveChatToCloud();
+                    // Fire update to IndexedDB instantly
+                    saveChatToLocalDB();
                 }
                 currentTypingBubble = null;
             }
@@ -704,12 +664,9 @@
             sendBtn.disabled = true;
             userInput.disabled = true;
             
-            // Spawn temporary typewriter bubble
             currentTypingBubble = addMessage('', false, true);
-
             chatHistory.push({ role: "user", content: text });
 
-            // Post calculation task to worker thread
             worker.postMessage({ 
                 action: 'generate', 
                 payload: { chatHistory } 
