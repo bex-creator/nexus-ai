@@ -3,475 +3,268 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nexus AI Chat</title>
-    <!-- Tailwind CSS -->
+    <title>Local Offline AI</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Lucide Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        .custom-scrollbar::-webkit-scrollbar {
+        /* Custom scrollbar for a sleeker look */
+        ::-webkit-scrollbar {
             width: 8px;
         }
-        .custom-scrollbar::-webkit-scrollbar-track {
-            background: transparent;
+        ::-webkit-scrollbar-track {
+            background: #1f2937; 
         }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-            background-color: #374151;
-            border-radius: 20px;
-            border: 3px solid #111827;
+        ::-webkit-scrollbar-thumb {
+            background: #4b5563; 
+            border-radius: 4px;
         }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-            background-color: #4B5563;
+        ::-webkit-scrollbar-thumb:hover {
+            background: #6b7280; 
         }
         
-        /* Loading dots animation */
-        .dot-pulse {
-            animation: bounce 1.4s infinite ease-in-out both;
+        .dot-flashing {
+            position: relative;
+            width: 8px;
+            height: 8px;
+            border-radius: 5px;
+            background-color: #9ca3af;
+            color: #9ca3af;
+            animation: dot-flashing 1s infinite linear alternate;
+            animation-delay: 0.5s;
         }
-        .dot-1 { animation-delay: -0.32s; }
-        .dot-2 { animation-delay: -0.16s; }
-        .dot-3 { animation-delay: 0s; }
-        
-        @keyframes bounce {
-            0%, 80%, 100% { transform: scale(0); }
-            40% { transform: scale(1); }
+        .dot-flashing::before, .dot-flashing::after {
+            content: '';
+            display: inline-block;
+            position: absolute;
+            top: 0;
+        }
+        .dot-flashing::before {
+            left: -12px;
+            width: 8px;
+            height: 8px;
+            border-radius: 5px;
+            background-color: #9ca3af;
+            color: #9ca3af;
+            animation: dot-flashing 1s infinite alternate;
+            animation-delay: 0s;
+        }
+        .dot-flashing::after {
+            left: 12px;
+            width: 8px;
+            height: 8px;
+            border-radius: 5px;
+            background-color: #9ca3af;
+            color: #9ca3af;
+            animation: dot-flashing 1s infinite alternate;
+            animation-delay: 1s;
+        }
+
+        @keyframes dot-flashing {
+            0% { background-color: #9ca3af; }
+            50%, 100% { background-color: rgba(156, 163, 175, 0.2); }
         }
     </style>
 </head>
-<body class="flex flex-col h-screen bg-gray-900 text-gray-100 font-sans selection:bg-indigo-500/30">
+<body class="bg-gray-900 text-gray-100 font-sans h-screen flex flex-col antialiased">
 
     <!-- Header -->
-    <header class="flex-shrink-0 h-16 border-b border-gray-800 bg-gray-900/95 backdrop-blur-sm sticky top-0 z-10 flex items-center justify-between px-6 shadow-sm">
+    <header class="bg-gray-800 shadow-md p-4 flex items-center justify-between z-10 border-b border-gray-700">
         <div class="flex items-center gap-3">
-            <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/20">
-                <i data-lucide="sparkles" class="text-white w-5 h-5"></i>
+            <div class="w-10 h-10 bg-indigo-500 rounded-xl flex items-center justify-center font-bold text-white shadow-lg">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
             </div>
             <div>
-                <h1 class="font-bold text-lg tracking-tight text-gray-100 leading-tight">Nexus</h1>
-                <p class="text-xs text-indigo-400 font-medium">Advanced AI Assistant</p>
+                <h1 class="text-xl font-bold">Local AI Assistant</h1>
+                <p class="text-xs text-green-400 font-mono">Status: 0% API Usage • 100% Local Compute</p>
             </div>
         </div>
-        <div class="flex gap-1">
-            <button id="settings-btn" class="text-gray-400 hover:text-white transition-colors p-2 rounded-lg hover:bg-gray-800" title="API Settings">
-                <i data-lucide="key" class="w-[18px] h-[18px]"></i>
-            </button>
-            <button id="clear-chat-btn" class="text-gray-400 hover:text-white transition-colors p-2 rounded-lg hover:bg-gray-800" title="New Chat">
-                <i data-lucide="refresh-cw" class="w-[18px] h-[18px]"></i>
-            </button>
+        <div class="text-xs text-gray-400 hidden sm:block max-w-xs text-right">
+            Powered by <b>Transformers.js</b> & <b>LaMini-Flan-T5</b>.<br>Runs entirely in your web browser.
         </div>
     </header>
 
-    <!-- Chat Area -->
-    <main class="flex-1 overflow-y-auto scroll-smooth custom-scrollbar" id="chat-container">
-        <div class="py-8" id="messages-wrapper">
-            <!-- Messages will be injected here -->
-        </div>
+    <!-- Main Content -->
+    <main class="flex-1 relative overflow-hidden flex flex-col">
         
-        <!-- Typing Indicator (Hidden by default) -->
-        <div id="typing-indicator" class="hidden flex w-full justify-start mb-6 px-4 md:px-8">
-            <div class="flex max-w-3xl w-full flex-row items-start gap-4">
-                <div class="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center mt-1 bg-gradient-to-br from-indigo-500 to-purple-600 shadow-sm">
-                    <i data-lucide="bot" class="text-white w-[18px] h-[18px]"></i>
+        <!-- Loading Overlay (Visible during initial download) -->
+        <div id="loading-screen" class="absolute inset-0 bg-gray-900/95 z-20 flex flex-col items-center justify-center p-6 backdrop-blur-sm transition-opacity duration-500">
+            <div class="max-w-md w-full bg-gray-800 rounded-2xl p-8 shadow-2xl border border-gray-700 text-center">
+                <div class="w-16 h-16 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mx-auto mb-6"></div>
+                <h2 class="text-2xl font-bold mb-2">Downloading Brain...</h2>
+                <p class="text-gray-400 text-sm mb-6">First boot takes a moment. We are securely downloading the neural network weights (~90MB) directly to your browser's local cache. It will run offline after this.</p>
+                
+                <!-- Progress Bar -->
+                <div class="w-full bg-gray-700 rounded-full h-3 mb-2 overflow-hidden">
+                    <div id="progress-bar" class="bg-indigo-500 h-3 rounded-full transition-all duration-300" style="width: 0%"></div>
                 </div>
-                <div class="flex flex-col items-start">
-                    <div class="px-5 py-4 rounded-2xl bg-gray-800 rounded-tl-sm border border-gray-700/50 flex items-center gap-1.5 shadow-sm h-[46px]">
-                        <div class="w-2 h-2 rounded-full bg-gray-500 dot-pulse dot-1"></div>
-                        <div class="w-2 h-2 rounded-full bg-gray-500 dot-pulse dot-2"></div>
-                        <div class="w-2 h-2 rounded-full bg-gray-500 dot-pulse dot-3"></div>
-                    </div>
-                </div>
+                <p id="progress-text" class="text-xs font-mono text-indigo-300">Initializing engine...</p>
             </div>
         </div>
 
-        <!-- Error Message (Hidden by default) -->
-        <div id="error-message" class="hidden flex w-full justify-center mb-6 px-4">
-            <div class="flex items-center gap-2 bg-red-900/30 border border-red-500/30 text-red-200 px-4 py-3 rounded-lg text-sm max-w-2xl text-center">
-                <i data-lucide="alert-circle" class="text-red-400 w-4 h-4"></i>
-                <span id="error-text"></span>
-            </div>
+        <!-- Chat History Area -->
+        <div id="chat-container" class="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6">
+            <!-- Messages will be injected here via JavaScript -->
         </div>
 
-        <div id="scroll-anchor" class="h-4"></div>
+        <!-- Input Area -->
+        <div class="bg-gray-800 p-4 border-t border-gray-700">
+            <div class="max-w-4xl mx-auto flex gap-3">
+                <input 
+                    type="text" 
+                    id="user-input" 
+                    placeholder="Ask the local AI something..." 
+                    class="flex-1 bg-gray-900 border border-gray-600 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-100 transition-all shadow-inner"
+                    autocomplete="off"
+                    disabled
+                >
+                <button 
+                    id="send-btn" 
+                    class="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-3 px-6 rounded-xl transition-colors shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center min-w-[100px]"
+                    disabled
+                >
+                    Send
+                </button>
+            </div>
+            <p class="text-center text-xs text-gray-500 mt-2">The AI is running on your device's hardware. Complex questions may take a few seconds.</p>
+        </div>
     </main>
 
-    <!-- Input Area -->
-    <footer class="flex-shrink-0 bg-gray-900 border-t border-gray-800 p-4 md:p-6 pb-6 md:pb-8">
-        <div class="max-w-4xl mx-auto relative">
-            <div class="relative flex items-end bg-gray-800 border border-gray-700 rounded-2xl shadow-lg focus-within:ring-2 focus-within:ring-indigo-500/50 focus-within:border-indigo-500/50 transition-all">
-                <textarea
-                    id="chat-input"
-                    placeholder="Message Nexus..."
-                    class="w-full bg-transparent text-gray-100 placeholder-gray-500 max-h-[200px] min-h-[56px] py-4 pl-5 pr-14 outline-none resize-none overflow-y-auto"
-                    rows="1"
-                ></textarea>
-                <button
-                    id="send-btn"
-                    disabled
-                    class="absolute right-2 bottom-2 p-2.5 rounded-xl flex items-center justify-center transition-all bg-gray-700/50 text-gray-500 cursor-not-allowed"
-                >
-                    <i id="send-icon" data-lucide="send" class="w-[18px] h-[18px] ml-0.5"></i>
-                    <i id="loading-icon" data-lucide="loader-2" class="hidden w-[18px] h-[18px] animate-spin"></i>
-                </button>
-            </div>
-            <div class="text-center mt-3">
-                <p class="text-xs text-gray-500 font-medium">
-                    Nexus can make mistakes. Consider verifying important information.
-                </p>
-            </div>
-        </div>
-    </footer>
+    <!-- The actual Logic (Transformers.js) -->
+    <script type="module">
+        // Import the Transformers.js library straight from the Hugging Face CDN
+        import { pipeline, env } from 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.0.0/dist/transformers.min.js';
 
-    <!-- API Key Modal -->
-    <div id="api-key-modal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center px-4 hidden">
-        <div class="bg-gray-800 border border-gray-700 rounded-2xl shadow-2xl p-6 w-full max-w-md transform transition-all">
-            <div class="flex items-center gap-3 mb-4">
-                <div class="p-2 bg-indigo-500/20 rounded-lg">
-                    <i data-lucide="key" class="text-indigo-400 w-5 h-5"></i>
-                </div>
-                <h2 class="text-xl font-bold text-gray-100">Enter API Key</h2>
-            </div>
-            <p class="text-sm text-gray-400 mb-6">To use Nexus AI locally, please enter your Gemini API key. It will be stored securely in your browser's local storage.</p>
-            <input 
-                type="password" 
-                id="api-key-input" 
-                placeholder="AIzaSy..." 
-                class="w-full bg-gray-900 border border-gray-700 rounded-xl px-4 py-3 text-gray-100 placeholder-gray-500 focus:ring-2 focus:ring-indigo-500/50 outline-none mb-6 transition-all"
-            >
-            <div class="flex justify-end gap-3">
-                <button id="cancel-key-btn" class="px-4 py-2 rounded-xl text-gray-300 hover:text-white hover:bg-gray-700 transition-colors hidden font-medium text-sm">Cancel</button>
-                <button id="save-key-btn" class="px-5 py-2.5 rounded-xl bg-indigo-600 text-white hover:bg-indigo-500 transition-colors shadow-md font-medium text-sm flex items-center gap-2">
-                    Save Key
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Application Logic -->
-    <script>
-        // --- Configuration & State ---
-        let userApiKey = localStorage.getItem('gemini_api_key') || "";
-        const SYSTEM_PROMPT = "You are Nexus, a highly intelligent, exceptionally capable, and friendly AI assistant. You provide accurate, detailed, and well-structured answers. You use markdown for formatting, especially for code blocks, lists, and emphasis.";
-
-        function getModelEndpoint() {
-            return `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${userApiKey}`;
-        }
-
-        let messages = [
-            {
-                role: 'model',
-                text: "Hello! I'm Nexus, your AI assistant. How can I help you today? You can ask me to write code, explain complex topics, or brainstorm ideas."
-            }
-        ];
-        let isTyping = false;
-
-        // --- DOM Elements ---
-        const chatContainer = document.getElementById('chat-container');
-        const messagesWrapper = document.getElementById('messages-wrapper');
-        const chatInput = document.getElementById('chat-input');
-        const sendBtn = document.getElementById('send-btn');
-        const sendIcon = document.getElementById('send-icon');
-        const loadingIcon = document.getElementById('loading-icon');
-        const clearChatBtn = document.getElementById('clear-chat-btn');
-        const typingIndicator = document.getElementById('typing-indicator');
-        const errorContainer = document.getElementById('error-message');
-        const errorText = document.getElementById('error-text');
-
-        // Modal Elements
-        const apiKeyModal = document.getElementById('api-key-modal');
-        const apiKeyInput = document.getElementById('api-key-input');
-        const saveKeyBtn = document.getElementById('save-key-btn');
-        const cancelKeyBtn = document.getElementById('cancel-key-btn');
-        const settingsBtn = document.getElementById('settings-btn');
-
-        // --- Initialize Icons ---
-        lucide.createIcons();
-
-        // --- Utility Functions ---
-
-        // Simple HTML Escape to prevent XSS
-        function escapeHtml(unsafe) {
-            return unsafe
-                 .replace(/&/g, "&amp;")
-                 .replace(/</g, "&lt;")
-                 .replace(/>/g, "&gt;")
-                 .replace(/"/g, "&quot;")
-                 .replace(/'/g, "&#039;");
-        }
-
-        // Markdown Formatter (Handles Code Blocks, Bold, and Line Breaks)
-        function formatMessageText(text) {
-            if (!text) return "";
-
-            // Split by code blocks first
-            const parts = text.split(/(```[\s\S]*?```)/g);
-            
-            const formattedParts = parts.map((part) => {
-                if (part.startsWith('```') && part.endsWith('```')) {
-                    // Extract language and code
-                    const match = part.match(/```([a-zA-Z0-9+#-]+)?\n([\s\S]*?)```/);
-                    const code = match ? match[2] : part.slice(3, -3);
-                    const lang = match && match[1] ? match[1] : 'code';
-
-                    const safeCode = escapeHtml(code.trim());
-                    const safeLang = escapeHtml(lang);
-
-                    return `
-                        <div class="my-4 rounded-lg overflow-hidden border border-gray-700/50 bg-gray-900/80 shadow-sm">
-                            <div class="flex items-center justify-between px-4 py-1.5 bg-gray-800/80 border-b border-gray-700/50 text-xs text-gray-400 font-mono">
-                                <span>${safeLang}</span>
-                            </div>
-                            <pre class="p-4 overflow-x-auto text-sm text-gray-200 font-mono leading-relaxed"><code>${safeCode}</code></pre>
-                        </div>
-                    `;
-                }
-
-                // Process normal text
-                let safeText = escapeHtml(part);
-                
-                // Bold formatting
-                safeText = safeText.replace(/\*\*([\s\S]*?)\*\*/g, '<strong class="font-semibold text-gray-100">$1</strong>');
-                // Line breaks
-                safeText = safeText.replace(/\n/g, '<br>');
-
-                return `<span class="leading-relaxed">${safeText}</span>`;
-            });
-
-            return formattedParts.join('');
-        }
-
-        // --- Rendering ---
-
-        function renderMessages() {
-            messagesWrapper.innerHTML = '';
-            
-            messages.forEach(msg => {
-                const isUser = msg.role === 'user';
-                const avatarIcon = isUser ? 'user' : 'bot';
-                const avatarClass = isUser ? 'bg-blue-600' : 'bg-gradient-to-br from-indigo-500 to-purple-600';
-                const bubbleClass = isUser 
-                    ? 'bg-blue-600 text-white rounded-tr-sm' 
-                    : 'bg-gray-800 text-gray-300 rounded-tl-sm border border-gray-700/50 shadow-sm';
-                
-                const alignment = isUser ? 'justify-end' : 'justify-start';
-                const rowDirection = isUser ? 'flex-row-reverse' : 'flex-row';
-                const itemAlignment = isUser ? 'items-end' : 'items-start';
-                const name = isUser ? 'You' : 'Nexus AI';
-
-                const messageHTML = `
-                    <div class="flex w-full ${alignment} mb-6 px-4 md:px-8">
-                        <div class="flex max-w-4xl w-full ${rowDirection} items-start gap-4">
-                            <!-- Avatar -->
-                            <div class="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center mt-1 shadow-sm ${avatarClass}">
-                                <i data-lucide="${avatarIcon}" class="text-white w-4 h-4"></i>
-                            </div>
-
-                            <!-- Message Content -->
-                            <div class="flex flex-col max-w-[85%] ${itemAlignment}">
-                                <div class="px-5 py-3.5 rounded-2xl ${bubbleClass}">
-                                    ${formatMessageText(msg.text)}
-                                </div>
-                                <span class="text-xs text-gray-500 mt-1.5 px-1 font-medium">
-                                    ${name}
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-                `;
-                messagesWrapper.insertAdjacentHTML('beforeend', messageHTML);
-            });
-
-            // Re-initialize icons for newly added DOM elements
-            lucide.createIcons();
-            scrollToBottom();
-        }
-
-        function scrollToBottom() {
-            chatContainer.scrollTop = chatContainer.scrollHeight;
-        }
-
-        function setTypingState(typing) {
-            isTyping = typing;
-            chatInput.disabled = typing;
-            
-            if (typing) {
-                typingIndicator.classList.remove('hidden');
-                sendIcon.classList.add('hidden');
-                loadingIcon.classList.remove('hidden');
-                updateSendButtonStyles();
-            } else {
-                typingIndicator.classList.add('hidden');
-                sendIcon.classList.remove('hidden');
-                loadingIcon.classList.add('hidden');
-                updateSendButtonStyles();
-            }
-            scrollToBottom();
-        }
-
-        function showError(message) {
-            if (message) {
-                errorText.textContent = message;
-                errorContainer.classList.remove('hidden');
-            } else {
-                errorContainer.classList.add('hidden');
-            }
-            scrollToBottom();
-        }
-
-        function updateSendButtonStyles() {
-            const hasText = chatInput.value.trim().length > 0;
-            if (hasText && !isTyping) {
-                sendBtn.disabled = false;
-                sendBtn.className = "absolute right-2 bottom-2 p-2.5 rounded-xl flex items-center justify-center transition-all bg-indigo-600 text-white hover:bg-indigo-500 shadow-md cursor-pointer";
-            } else {
-                sendBtn.disabled = true;
-                sendBtn.className = "absolute right-2 bottom-2 p-2.5 rounded-xl flex items-center justify-center transition-all bg-gray-700/50 text-gray-500 cursor-not-allowed";
-            }
-        }
-
-        // --- API Interaction ---
+        // Configure environment to prioritize WASM (CPU/Browser) optimization
+        env.allowLocalModels = false; // We are fetching the open-source model from the web on first run
         
-        async function fetchGeminiResponse(conversationHistory, retries = 5, backoff = 1000) {
-            if (!userApiKey) {
-                throw new Error("API key is missing. Please enter it in settings.");
+        // DOM Elements
+        const chatContainer = document.getElementById('chat-container');
+        const userInput = document.getElementById('user-input');
+        const sendBtn = document.getElementById('send-btn');
+        const loadingScreen = document.getElementById('loading-screen');
+        const progressBar = document.getElementById('progress-bar');
+        const progressText = document.getElementById('progress-text');
+
+        let aiPipeline = null;
+        let isGenerating = false;
+
+        // Message Renderer Helper
+        function addMessage(text, isUser = false, isTyping = false) {
+            const wrapper = document.createElement('div');
+            wrapper.className = `flex ${isUser ? 'justify-end' : 'justify-start'} animate-fade-in-up`;
+            
+            const bubble = document.createElement('div');
+            bubble.className = `max-w-[85%] sm:max-w-[75%] rounded-2xl px-5 py-3 shadow-md ${
+                isUser 
+                ? 'bg-indigo-600 text-white rounded-br-none' 
+                : 'bg-gray-800 border border-gray-700 text-gray-200 rounded-bl-none'
+            }`;
+
+            if (isTyping) {
+                bubble.innerHTML = '<div class="py-2 pl-3"><div class="dot-flashing"></div></div>';
+                bubble.id = 'typing-indicator';
+            } else {
+                // simple sanitization for text
+                bubble.innerText = text; 
             }
 
-            const payload = {
-                contents: conversationHistory,
-                systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] }
-            };
+            wrapper.appendChild(bubble);
+            chatContainer.appendChild(wrapper);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+            
+            return wrapper;
+        }
 
+        // Initialize the AI Model
+        async function loadAI() {
             try {
-                const response = await fetch(getModelEndpoint(), {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
+                // We are using 'text2text-generation' with LaMini-Flan-T5.
+                // It's a 78-million parameter model that downloads very fast and follows instructions well.
+                aiPipeline = await pipeline('text2text-generation', 'Xenova/LaMini-Flan-T5-78M', {
+                    progress_callback: (data) => {
+                        if (data.status === 'initiate') {
+                            progressText.innerText = `Fetching ${data.file}...`;
+                        } else if (data.status === 'progress') {
+                            // Calculate progress accurately
+                            const percent = data.progress !== undefined ? data.progress : Math.round((data.loaded / data.total) * 100);
+                            progressBar.style.width = `${percent}%`;
+                            progressText.innerText = `Caching Neural Weights... ${Math.round(percent)}%`;
+                        } else if (data.status === 'done') {
+                            progressText.innerText = `Compiling WebAssembly...`;
+                        }
+                    }
                 });
 
-                if (!response.ok) {
-                    const errorData = await response.json().catch(() => ({}));
-                    const errorMessage = errorData.error?.message || `HTTP Error: ${response.status}`;
-                    
-                    // Don't retry on 4xx client errors (like invalid API key)
-                    if (response.status >= 400 && response.status < 500) {
-                       throw new Error(`API Error (${response.status}): ${errorMessage}`);
-                    }
-                    throw new Error(errorMessage);
-                }
+                // Hide loading screen, enable inputs
+                loadingScreen.style.opacity = '0';
+                setTimeout(() => loadingScreen.style.display = 'none', 500);
+                userInput.disabled = false;
+                sendBtn.disabled = false;
+                userInput.focus();
 
-                const data = await response.json();
-                return data.candidates?.[0]?.content?.parts?.[0]?.text || "Sorry, I generated an empty response.";
-            } catch (error) {
-                // If it's a 4xx client error, propagate it immediately without retrying
-                if (error.message.includes("API Error")) {
-                    throw error;
-                }
+                addMessage("Boot sequence complete! I am fully loaded into your device's memory. I don't use the cloud or APIs. Try asking me a question or to write a short poem!", false);
 
-                if (retries > 0) {
-                    await new Promise(resolve => setTimeout(resolve, backoff));
-                    return fetchGeminiResponse(conversationHistory, retries - 1, backoff * 2);
-                } else {
-                    throw new Error(`Connection issue: ${error.message}. Please try again.`);
-                }
+            } catch (err) {
+                progressText.innerText = `Error loading model: ${err.message}`;
+                progressText.classList.add('text-red-400');
+                console.error("AI Load Error:", err);
             }
         }
 
-        async function handleSendMessage() {
-            const userText = chatInput.value.trim();
-            if (!userText || isTyping) return;
+        // Handle text generation
+        async function handleSend() {
+            const text = userInput.value.trim();
+            if (!text || isGenerating || !aiPipeline) return;
 
-            // Clear input and errors
-            chatInput.value = "";
-            chatInput.style.height = 'auto'; // Reset height
-            showError(null);
-            updateSendButtonStyles();
-
-            // Add user message
-            messages.push({ role: 'user', text: userText });
-            renderMessages();
-            setTypingState(true);
-
-            // Format history for Gemini API
-            const apiHistory = messages.map(msg => ({
-                role: msg.role === 'user' ? 'user' : 'model',
-                parts: [{ text: msg.text }]
-            }));
+            // UI updates
+            userInput.value = '';
+            addMessage(text, true);
+            isGenerating = true;
+            sendBtn.disabled = true;
+            userInput.disabled = true;
+            
+            // Show typing indicator
+            const typingMsg = addMessage('', false, true);
 
             try {
-                const responseText = await fetchGeminiResponse(apiHistory);
-                messages.push({ role: 'model', text: responseText });
-            } catch (err) {
-                showError(err.message);
-                // Optionally remove the user message here if you want them to easily try again, 
-                // but showing the error at the bottom usually suffices.
+                // Give the browser a tick to render the typing animation
+                await new Promise(resolve => setTimeout(resolve, 50));
+
+                // 🧠 ACTUAL LOCAL INFERENCE 🧠
+                // No internet required here! It's running the math locally.
+                const results = await aiPipeline(text, {
+                    max_new_tokens: 250,
+                    temperature: 0.7,
+                    repetition_penalty: 1.2
+                });
+
+                // Extract generated text
+                const answer = results[0].generated_text;
+                
+                // Replace typing indicator with the answer
+                typingMsg.remove();
+                addMessage(answer, false);
+
+            } catch (error) {
+                typingMsg.remove();
+                addMessage(`Oops, my local processor hit an error: ${error.message}`, false);
+                console.error(error);
             } finally {
-                setTypingState(false);
-                renderMessages();
+                // Reset UI
+                isGenerating = false;
+                sendBtn.disabled = false;
+                userInput.disabled = false;
+                userInput.focus();
             }
         }
 
-        // --- Event Listeners ---
-
-        // Auto-resize textarea
-        chatInput.addEventListener('input', function() {
-            this.style.height = 'auto';
-            this.style.height = `${Math.min(this.scrollHeight, 200)}px`;
-            updateSendButtonStyles();
+        // Event Listeners
+        sendBtn.addEventListener('click', handleSend);
+        userInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') handleSend();
         });
 
-        // Keyboard support (Enter to send, Shift+Enter for new line)
-        chatInput.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                handleSendMessage();
-            }
-        });
-
-        // Click to send
-        sendBtn.addEventListener('click', handleSendMessage);
-
-        // Clear chat
-        clearChatBtn.addEventListener('click', () => {
-            messages = [{ role: 'model', text: "Chat cleared. What would you like to talk about next?" }];
-            chatInput.value = "";
-            chatInput.style.height = 'auto';
-            showError(null);
-            renderMessages();
-            updateSendButtonStyles();
-        });
-
-        // API Key Modal Listeners
-        function checkApiKey() {
-            if (!userApiKey) {
-                apiKeyModal.classList.remove('hidden');
-                cancelKeyBtn.classList.add('hidden'); // Force entry if no key
-            }
-        }
-
-        saveKeyBtn.addEventListener('click', () => {
-            const key = apiKeyInput.value.trim();
-            if (key) {
-                userApiKey = key;
-                localStorage.setItem('gemini_api_key', key);
-                apiKeyModal.classList.add('hidden');
-                apiKeyInput.value = '';
-                showError(null); // Clear errors
-            }
-        });
-
-        settingsBtn.addEventListener('click', () => {
-            apiKeyInput.value = userApiKey;
-            apiKeyModal.classList.remove('hidden');
-            cancelKeyBtn.classList.remove('hidden'); // Allow cancel from settings menu
-        });
-
-        cancelKeyBtn.addEventListener('click', () => {
-            apiKeyModal.classList.add('hidden');
-        });
-
-        // Initial render
-        renderMessages();
-        checkApiKey();
-
+        // Start loading the AI immediately when the page runs
+        loadAI();
     </script>
 </body>
 </html>
