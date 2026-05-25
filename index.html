@@ -74,11 +74,11 @@
             </div>
             <div>
                 <h1 class="text-xl font-bold">Local AI Assistant</h1>
-                <p class="text-xs text-green-400 font-mono">Status: 0% API Usage • 100% Local Compute</p>
+                <p class="text-xs text-green-400 font-mono">Status: Background Worker Active • CPU Computing</p>
             </div>
         </div>
         <div class="text-xs text-gray-400 hidden sm:block max-w-xs text-right">
-            Powered by <b>Transformers.js</b> & <b>Qwen2.5-0.5B</b>.<br>Runs entirely in your web browser.
+            Powered by <b>Qwen2.5-0.5B</b>.<br>Runs asynchronously in a Web Worker.
         </div>
     </header>
 
@@ -96,7 +96,7 @@
                 <div class="w-full bg-gray-700 rounded-full h-3 mb-2 overflow-hidden">
                     <div id="progress-bar" class="bg-indigo-500 h-3 rounded-full transition-all duration-300" style="width: 0%"></div>
                 </div>
-                <p id="progress-text" class="text-xs font-mono text-indigo-300">Initializing engine...</p>
+                <p id="progress-text" class="text-xs font-mono text-indigo-300">Initializing worker...</p>
             </div>
         </div>
 
@@ -124,20 +124,12 @@
                     Send
                 </button>
             </div>
-            <p class="text-center text-xs text-gray-500 mt-2">The AI is running on your device's hardware. Complex questions may take a few seconds.</p>
+            <p class="text-center text-xs text-gray-500 mt-2">Running asynchronously inside a Web Worker. Your tab stays active and smooth!</p>
         </div>
     </main>
 
-    <!-- The actual Logic (Transformers.js) -->
-    <script type="module">
-        import { pipeline, env, TextStreamer } from 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.0.0/dist/transformers.min.js';
-
-        // Configure environment to prioritize WASM (CPU/Browser) optimization
-        env.allowLocalModels = false; 
-        
-        // FIXED: Set safe thread limit to avoid locking up browser iframe sandboxes
-        env.backends.onnx.wasm.numThreads = 1;
-        
+    <!-- Main Thread UI Engine -->
+    <script>
         // DOM Elements
         const chatContainer = document.getElementById('chat-container');
         const userInput = document.getElementById('user-input');
@@ -146,8 +138,8 @@
         const progressBar = document.getElementById('progress-bar');
         const progressText = document.getElementById('progress-text');
 
-        let aiPipeline = null;
         let isGenerating = false;
+        let currentTypingBubble = null;
         
         // Chat history array to remember the conversation
         let chatHistory = [
@@ -180,132 +172,185 @@
             return bubble; 
         }
 
-        // Initialize the AI Model
-        async function loadAI() {
-            try {
-                // UPGRADE: Switched to Qwen2.5-0.5B-Instruct. Outstanding logical intelligence and factual knowledge, 
-                // yet extremely fast and safe inside the browser's memory constraints (~350MB).
-                aiPipeline = await pipeline('text-generation', 'onnx-community/Qwen2.5-0.5B-Instruct', {
-                    device: 'wasm',   
-                    dtype: 'q4',      
-                    progress_callback: (data) => {
-                        if (data.status === 'initiate') {
-                            progressText.innerText = `Fetching ${data.file}...`;
-                        } else if (data.status === 'progress') {
-                            const percent = data.progress !== undefined ? data.progress : Math.round((data.loaded / data.total) * 100);
-                            progressBar.style.width = `${percent}%`;
-                            progressText.innerText = `Caching Neural Weights... ${Math.round(percent)}%`;
-                        } else if (data.status === 'done') {
-                            progressText.innerText = `Compiling Engine / WASM...`;
-                        }
-                    }
-                });
+        // ==========================================
+        //  CREATE THE INLINE WEB WORKER (BACKGROUND)
+        // ==========================================
+        const workerBlobCode = `
+            import { pipeline, env, TextStreamer } from 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.0.0/dist/transformers.min.js';
 
-                // Hide loading screen, enable inputs
+            env.allowLocalModels = false;
+            // Force 1 single thread to be completely safe against locks in browser sandboxes
+            env.backends.onnx.wasm.numThreads = 1;
+
+            let aiPipeline = null;
+
+            self.onmessage = async function(e) {
+                const { action, payload } = e.data;
+
+                if (action === 'load') {
+                    try {
+                        aiPipeline = await pipeline('text-generation', 'onnx-community/Qwen2.5-0.5B-Instruct', {
+                            device: 'wasm',
+                            dtype: 'q4',
+                            progress_callback: (data) => {
+                                self.postMessage({ action: 'progress', data });
+                            }
+                        });
+                        self.postMessage({ action: 'ready' });
+                    } catch (err) {
+                        self.postMessage({ action: 'error', error: err.message || String(err) });
+                    }
+                }
+
+                if (action === 'generate') {
+                    if (!aiPipeline) {
+                        self.postMessage({ action: 'error', error: 'AI Brain was not loaded!' });
+                        return;
+                    }
+
+                    try {
+                        const streamer = new TextStreamer(aiPipeline.tokenizer, {
+                            skip_prompt: true,
+                            callback_function: (token) => {
+                                // Feed words back to the main UI thread in real-time as they are calculated!
+                                self.postMessage({ action: 'token', token });
+                            }
+                        });
+
+                        const results = await aiPipeline(payload.chatHistory, {
+                            max_new_tokens: 250,
+                            temperature: 0.6,
+                            repetition_penalty: 1.1,
+                            do_sample: true,
+                            streamer: streamer
+                        });
+
+                        let answer = "";
+                        const genText = results[0].generated_text;
+                        if (Array.isArray(genText)) {
+                            answer = genText[genText.length - 1].content;
+                        } else if (typeof genText === 'string') {
+                            answer = genText;
+                        }
+
+                        self.postMessage({ action: 'complete', answer });
+                    } catch (err) {
+                        self.postMessage({ action: 'error', error: err.message || String(err) });
+                    }
+                }
+            };
+        `;
+
+        // Turn our string code into a running background browser worker!
+        const blob = new Blob([workerBlobCode], { type: 'application/javascript' });
+        const worker = new Worker(URL.createObjectURL(blob), { type: 'module' });
+
+        // Listen to messages sent from the background worker back to the UI
+        worker.onmessage = function(e) {
+            const { action, data, token, answer, error } = e.data;
+
+            if (action === 'progress') {
+                if (data.status === 'initiate') {
+                    progressText.innerText = `Fetching ${data.file}...`;
+                } else if (data.status === 'progress') {
+                    const percent = data.progress !== undefined ? data.progress : Math.round((data.loaded / data.total) * 100);
+                    progressBar.style.width = `${percent}%`;
+                    progressText.innerText = `Caching Neural Weights... ${Math.round(percent)}%`;
+                } else if (data.status === 'done') {
+                    progressText.innerText = `Compiling Engine / WASM...`;
+                }
+            }
+
+            else if (action === 'ready') {
+                // Background worker successfully completed setup
                 loadingScreen.style.opacity = '0';
                 setTimeout(() => loadingScreen.style.display = 'none', 500);
                 userInput.disabled = false;
                 sendBtn.disabled = false;
                 userInput.focus();
-
-                addMessage("Boot sequence complete! I am fully loaded into your device's memory. Ask me anything, like \"What is W3Schools?\"!", false);
-
-            } catch (err) {
-                const errorMsg = err.message || String(err) || "Unknown Browser Memory Error";
-                progressText.innerText = `Error loading model: ${errorMsg}`;
-                progressText.classList.add('text-red-400');
-                console.error("AI Load Error:", err);
+                addMessage("Boot sequence complete! I am fully running in a background thread. Ask me anything, like \"What is W3Schools?\"!", false);
             }
-        }
 
-        // Handle text generation
-        async function handleSend() {
+            else if (action === 'token') {
+                // Clear typing indicator and begin typing words onto UI
+                if (currentTypingBubble && currentTypingBubble.id === 'typing-indicator') {
+                    currentTypingBubble.id = '';
+                    currentTypingBubble.innerText = '';
+                }
+                if (currentTypingBubble) {
+                    currentTypingBubble.innerText += token;
+                    chatContainer.scrollTop = chatContainer.scrollHeight;
+                }
+            }
+
+            else if (action === 'complete') {
+                // Background generation finished
+                isGenerating = false;
+                sendBtn.disabled = false;
+                userInput.disabled = false;
+                userInput.focus();
+
+                // Double check to ensure typing bubble matches final text
+                if (currentTypingBubble) {
+                    if (currentTypingBubble.id === 'typing-indicator') {
+                        currentTypingBubble.id = '';
+                        currentTypingBubble.innerText = answer;
+                    }
+                    // Save history locally
+                    chatHistory.push({ role: "assistant", content: currentTypingBubble.innerText });
+                }
+                currentTypingBubble = null;
+            }
+
+            else if (action === 'error') {
+                isGenerating = false;
+                sendBtn.disabled = false;
+                userInput.disabled = false;
+
+                if (currentTypingBubble) {
+                    currentTypingBubble.id = '';
+                    currentTypingBubble.innerText = `Oops, my local processor hit an error: ${error}`;
+                } else {
+                    progressText.innerText = `Error loading model: ${error}`;
+                    progressText.classList.add('text-red-400');
+                }
+                currentTypingBubble = null;
+                console.error("Worker error:", error);
+            }
+        };
+
+        // Handle sending messages
+        function handleSend() {
             const text = userInput.value.trim();
-            if (!text || isGenerating || !aiPipeline) return;
+            if (!text || isGenerating) return;
 
-            // UI updates
             userInput.value = '';
             addMessage(text, true);
             isGenerating = true;
             sendBtn.disabled = true;
             userInput.disabled = true;
             
-            // Show typing indicator
-            const typingBubble = addMessage('', false, true);
+            // Render loading flashing dots
+            currentTypingBubble = addMessage('', false, true);
 
-            try {
-                await new Promise(resolve => setTimeout(resolve, 50));
+            // Add prompt to chat history
+            chatHistory.push({ role: "user", content: text });
 
-                // Add the user's message to local history
-                chatHistory.push({ role: "user", content: text });
-
-                // Create Streamer to type words out in real-time
-                const streamer = new TextStreamer(aiPipeline.tokenizer, {
-                    skip_prompt: true,
-                    callback_function: (newWord) => {
-                        if (typingBubble.id === 'typing-indicator') {
-                            typingBubble.id = '';
-                            typingBubble.innerText = '';
-                        }
-                        typingBubble.innerText += newWord;
-                        chatContainer.scrollTop = chatContainer.scrollHeight;
-                    }
-                });
-
-                // Run local inference
-                const results = await aiPipeline(chatHistory, {
-                    max_new_tokens: 250,
-                    temperature: 0.6,    // Moderate temperature for natural answers
-                    repetition_penalty: 1.1,
-                    do_sample: true,     // Essential for quantized models to avoid math/loop loops
-                    streamer: streamer   
-                });
-
-                // Safely parse out the answer depending on whether it returned messages or raw string
-                let answer = "";
-                const genText = results[0].generated_text;
-                
-                if (Array.isArray(genText)) {
-                    answer = genText[genText.length - 1].content;
-                } else if (typeof genText === 'string') {
-                    answer = genText;
-                } else {
-                    answer = "I calculated an answer, but had trouble parsing it.";
-                }
-                
-                // If streaming finished but the typing indicator didn't clear, force-clear it
-                if (typingBubble.id === 'typing-indicator') {
-                    typingBubble.id = '';
-                    typingBubble.innerText = answer;
-                }
-
-                // Save clean response back to local memory
-                chatHistory.push({ role: "assistant", content: answer });
-
-            } catch (error) {
-                if (typingBubble.id === 'typing-indicator') {
-                     typingBubble.id = '';
-                     typingBubble.innerText = `Oops, my local processor hit an error: ${error.message}`;
-                } else {
-                     typingBubble.innerText += `\n\n[Error: ${error.message}]`;
-                }
-                console.error(error);
-            } finally {
-                isGenerating = false;
-                sendBtn.disabled = false;
-                userInput.disabled = false;
-                userInput.focus();
-            }
+            // Tell the background worker to start calculating the response
+            worker.postMessage({ 
+                action: 'generate', 
+                payload: { chatHistory } 
+            });
         }
 
-        // Event Listeners
+        // Keyboard Event
         sendBtn.addEventListener('click', handleSend);
         userInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') handleSend();
         });
 
-        // Start loading the AI immediately when the page runs
-        loadAI();
+        // Trigger loading inside our background thread immediately
+        worker.postMessage({ action: 'load' });
     </script>
 </body>
 </html>
