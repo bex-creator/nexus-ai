@@ -74,7 +74,7 @@
             </div>
             <div>
                 <h1 class="text-xl font-bold">Local AI Assistant</h1>
-                <p class="text-xs text-green-400 font-mono">Status: Background Worker Active • CPU Computing</p>
+                <p id="status-text" class="text-xs text-green-400 font-mono">Status: Background Worker Active • Initializing...</p>
             </div>
         </div>
         <div class="text-xs text-gray-400 hidden sm:block max-w-xs text-right">
@@ -143,7 +143,7 @@
         
         // Chat history array to remember the conversation
         let chatHistory = [
-            { role: "system", content: "You are a helpful, highly intelligent, and logical AI assistant. Answer the user's questions clearly, accurately, and concisely." }
+            { role: "system", content: "You are a factual, concise AI assistant. Answer directly and accurately. Do NOT use emojis. Do NOT ramble or ask follow-up questions. Keep your answers brief." }
         ];
 
         // Message Renderer Helper
@@ -179,8 +179,8 @@
             import { pipeline, env, TextStreamer } from 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.0.0/dist/transformers.min.js';
 
             env.allowLocalModels = false;
-            // Force 1 single thread to be completely safe against locks in browser sandboxes
-            env.backends.onnx.wasm.numThreads = 1;
+            // Optimize WASM fallback by allowing multiple threads
+            env.backends.onnx.wasm.numThreads = navigator.hardwareConcurrency ? Math.min(navigator.hardwareConcurrency, 4) : 1;
 
             let aiPipeline = null;
 
@@ -189,14 +189,17 @@
 
                 if (action === 'load') {
                     try {
+                        // Use WebGPU if available for massive speedup, otherwise fallback to WASM
+                        const deviceToUse = navigator.gpu ? 'webgpu' : 'wasm';
+                        
                         aiPipeline = await pipeline('text-generation', 'onnx-community/Qwen2.5-0.5B-Instruct', {
-                            device: 'wasm',
+                            device: deviceToUse,
                             dtype: 'q4',
                             progress_callback: (data) => {
                                 self.postMessage({ action: 'progress', data });
                             }
                         });
-                        self.postMessage({ action: 'ready' });
+                        self.postMessage({ action: 'ready', device: deviceToUse });
                     } catch (err) {
                         self.postMessage({ action: 'error', error: err.message || String(err) });
                     }
@@ -218,10 +221,8 @@
                         });
 
                         const results = await aiPipeline(payload.chatHistory, {
-                            max_new_tokens: 250,
-                            temperature: 0.6,
-                            repetition_penalty: 1.1,
-                            do_sample: true,
+                            max_new_tokens: 512, // Increased so it doesn't get cut off mid-sentence
+                            do_sample: false,    // Use greedy decoding to completely stop random hallucinations and emojis
                             streamer: streamer
                         });
 
@@ -247,7 +248,7 @@
 
         // Listen to messages sent from the background worker back to the UI
         worker.onmessage = function(e) {
-            const { action, data, token, answer, error } = e.data;
+            const { action, data, token, answer, error, device } = e.data;
 
             if (action === 'progress') {
                 if (data.status === 'initiate') {
@@ -263,6 +264,14 @@
 
             else if (action === 'ready') {
                 // Background worker successfully completed setup
+                const statusText = document.getElementById('status-text');
+                if (device === 'webgpu') {
+                    statusText.innerText = 'Status: Active • WebGPU Accelerated 🚀';
+                    statusText.classList.replace('text-green-400', 'text-yellow-400');
+                } else {
+                    statusText.innerText = 'Status: Active • CPU Computing';
+                }
+
                 loadingScreen.style.opacity = '0';
                 setTimeout(() => loadingScreen.style.display = 'none', 500);
                 userInput.disabled = false;
