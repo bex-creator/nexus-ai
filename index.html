@@ -78,7 +78,7 @@
             </div>
         </div>
         <div class="text-xs text-gray-400 hidden sm:block max-w-xs text-right">
-            Powered by <b>Transformers.js</b> & <b>LaMini-Flan-T5</b>.<br>Runs entirely in your web browser.
+            Powered by <b>Transformers.js</b> & <b>Qwen2.5-0.5B</b>.<br>Runs entirely in your web browser.
         </div>
     </header>
 
@@ -90,7 +90,7 @@
             <div class="max-w-md w-full bg-gray-800 rounded-2xl p-8 shadow-2xl border border-gray-700 text-center">
                 <div class="w-16 h-16 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mx-auto mb-6"></div>
                 <h2 class="text-2xl font-bold mb-2">Downloading Brain...</h2>
-                <p class="text-gray-400 text-sm mb-6">First boot takes a moment. We are securely downloading the neural network weights (~90MB) directly to your browser's local cache. It will run offline after this.</p>
+                <p class="text-gray-400 text-sm mb-6">First boot takes a moment. We are securely downloading the neural network weights (~350MB) directly to your browser's local cache. It will run offline after this.</p>
                 
                 <!-- Progress Bar -->
                 <div class="w-full bg-gray-700 rounded-full h-3 mb-2 overflow-hidden">
@@ -130,11 +130,13 @@
 
     <!-- The actual Logic (Transformers.js) -->
     <script type="module">
-        // Import the Transformers.js library straight from the Hugging Face CDN
-        import { pipeline, env } from 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.0.0/dist/transformers.min.js';
+        import { pipeline, env, TextStreamer } from 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.0.0/dist/transformers.min.js';
 
         // Configure environment to prioritize WASM (CPU/Browser) optimization
-        env.allowLocalModels = false; // We are fetching the open-source model from the web on first run
+        env.allowLocalModels = false; 
+        
+        // FIXED: Set safe thread limit to avoid locking up browser iframe sandboxes
+        env.backends.onnx.wasm.numThreads = 1;
         
         // DOM Elements
         const chatContainer = document.getElementById('chat-container');
@@ -146,6 +148,11 @@
 
         let aiPipeline = null;
         let isGenerating = false;
+        
+        // Chat history array to remember the conversation
+        let chatHistory = [
+            { role: "system", content: "You are a helpful, highly intelligent, and logical AI assistant. Answer the user's questions clearly, accurately, and concisely." }
+        ];
 
         // Message Renderer Helper
         function addMessage(text, isUser = false, isTyping = false) {
@@ -153,7 +160,7 @@
             wrapper.className = `flex ${isUser ? 'justify-end' : 'justify-start'} animate-fade-in-up`;
             
             const bubble = document.createElement('div');
-            bubble.className = `max-w-[85%] sm:max-w-[75%] rounded-2xl px-5 py-3 shadow-md ${
+            bubble.className = `max-w-[85%] sm:max-w-[75%] rounded-2xl px-5 py-3 shadow-md whitespace-pre-wrap ${
                 isUser 
                 ? 'bg-indigo-600 text-white rounded-br-none' 
                 : 'bg-gray-800 border border-gray-700 text-gray-200 rounded-bl-none'
@@ -163,7 +170,6 @@
                 bubble.innerHTML = '<div class="py-2 pl-3"><div class="dot-flashing"></div></div>';
                 bubble.id = 'typing-indicator';
             } else {
-                // simple sanitization for text
                 bubble.innerText = text; 
             }
 
@@ -171,25 +177,26 @@
             chatContainer.appendChild(wrapper);
             chatContainer.scrollTop = chatContainer.scrollHeight;
             
-            return wrapper;
+            return bubble; 
         }
 
         // Initialize the AI Model
         async function loadAI() {
             try {
-                // We are using 'text2text-generation' with LaMini-Flan-T5.
-                // It's a 78-million parameter model that downloads very fast and follows instructions well.
-                aiPipeline = await pipeline('text2text-generation', 'Xenova/LaMini-Flan-T5-78M', {
+                // UPGRADE: Switched to Qwen2.5-0.5B-Instruct. Outstanding logical intelligence and factual knowledge, 
+                // yet extremely fast and safe inside the browser's memory constraints (~350MB).
+                aiPipeline = await pipeline('text-generation', 'onnx-community/Qwen2.5-0.5B-Instruct', {
+                    device: 'wasm',   
+                    dtype: 'q4',      
                     progress_callback: (data) => {
                         if (data.status === 'initiate') {
                             progressText.innerText = `Fetching ${data.file}...`;
                         } else if (data.status === 'progress') {
-                            // Calculate progress accurately
                             const percent = data.progress !== undefined ? data.progress : Math.round((data.loaded / data.total) * 100);
                             progressBar.style.width = `${percent}%`;
                             progressText.innerText = `Caching Neural Weights... ${Math.round(percent)}%`;
                         } else if (data.status === 'done') {
-                            progressText.innerText = `Compiling WebAssembly...`;
+                            progressText.innerText = `Compiling Engine / WASM...`;
                         }
                     }
                 });
@@ -201,10 +208,11 @@
                 sendBtn.disabled = false;
                 userInput.focus();
 
-                addMessage("Boot sequence complete! I am fully loaded into your device's memory. I don't use the cloud or APIs. Try asking me a question or to write a short poem!", false);
+                addMessage("Boot sequence complete! I am fully loaded into your device's memory. Ask me anything, like \"What is W3Schools?\"!", false);
 
             } catch (err) {
-                progressText.innerText = `Error loading model: ${err.message}`;
+                const errorMsg = err.message || String(err) || "Unknown Browser Memory Error";
+                progressText.innerText = `Error loading model: ${errorMsg}`;
                 progressText.classList.add('text-red-400');
                 console.error("AI Load Error:", err);
             }
@@ -223,33 +231,66 @@
             userInput.disabled = true;
             
             // Show typing indicator
-            const typingMsg = addMessage('', false, true);
+            const typingBubble = addMessage('', false, true);
 
             try {
-                // Give the browser a tick to render the typing animation
                 await new Promise(resolve => setTimeout(resolve, 50));
 
-                // 🧠 ACTUAL LOCAL INFERENCE 🧠
-                // No internet required here! It's running the math locally.
-                const results = await aiPipeline(text, {
-                    max_new_tokens: 250,
-                    temperature: 0.7,
-                    repetition_penalty: 1.2
+                // Add the user's message to local history
+                chatHistory.push({ role: "user", content: text });
+
+                // Create Streamer to type words out in real-time
+                const streamer = new TextStreamer(aiPipeline.tokenizer, {
+                    skip_prompt: true,
+                    callback_function: (newWord) => {
+                        if (typingBubble.id === 'typing-indicator') {
+                            typingBubble.id = '';
+                            typingBubble.innerText = '';
+                        }
+                        typingBubble.innerText += newWord;
+                        chatContainer.scrollTop = chatContainer.scrollHeight;
+                    }
                 });
 
-                // Extract generated text
-                const answer = results[0].generated_text;
+                // Run local inference
+                const results = await aiPipeline(chatHistory, {
+                    max_new_tokens: 250,
+                    temperature: 0.6,    // Moderate temperature for natural answers
+                    repetition_penalty: 1.1,
+                    do_sample: true,     // Essential for quantized models to avoid math/loop loops
+                    streamer: streamer   
+                });
+
+                // Safely parse out the answer depending on whether it returned messages or raw string
+                let answer = "";
+                const genText = results[0].generated_text;
                 
-                // Replace typing indicator with the answer
-                typingMsg.remove();
-                addMessage(answer, false);
+                if (Array.isArray(genText)) {
+                    answer = genText[genText.length - 1].content;
+                } else if (typeof genText === 'string') {
+                    answer = genText;
+                } else {
+                    answer = "I calculated an answer, but had trouble parsing it.";
+                }
+                
+                // If streaming finished but the typing indicator didn't clear, force-clear it
+                if (typingBubble.id === 'typing-indicator') {
+                    typingBubble.id = '';
+                    typingBubble.innerText = answer;
+                }
+
+                // Save clean response back to local memory
+                chatHistory.push({ role: "assistant", content: answer });
 
             } catch (error) {
-                typingMsg.remove();
-                addMessage(`Oops, my local processor hit an error: ${error.message}`, false);
+                if (typingBubble.id === 'typing-indicator') {
+                     typingBubble.id = '';
+                     typingBubble.innerText = `Oops, my local processor hit an error: ${error.message}`;
+                } else {
+                     typingBubble.innerText += `\n\n[Error: ${error.message}]`;
+                }
                 console.error(error);
             } finally {
-                // Reset UI
                 isGenerating = false;
                 sendBtn.disabled = false;
                 userInput.disabled = false;
