@@ -15,7 +15,8 @@
 
         /* Custom scrollbar for Gemini look */
         ::-webkit-scrollbar {
-            width: 8px;
+            width: 6px;
+            height: 6px;
         }
         ::-webkit-scrollbar-track {
             background: #131314; 
@@ -75,123 +76,188 @@
             0% { background-color: #a8b2c1; }
             50%, 100% { background-color: rgba(168, 178, 193, 0.2); }
         }
+
+        /* Smooth transitions for sidebar */
+        .sidebar-transition {
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
     </style>
 </head>
-<body class="text-gray-200 h-screen flex flex-col antialiased overflow-hidden">
+<body class="text-gray-200 h-screen flex overflow-hidden antialiased">
 
-    <!-- Top Navbar -->
-    <header class="h-16 flex items-center justify-between px-6 z-10 bg-[#131314] border-b border-[#202124]">
-        <div class="flex items-center gap-3">
-            <span class="text-xl font-medium tracking-tight bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-500 bg-clip-text text-transparent">Nexus AI</span>
+    <!-- Left Navigation Sidebar (Gemini style) -->
+    <aside id="sidebar" class="w-72 bg-[#1e1f20] border-r border-[#303134] flex flex-col z-20 sidebar-transition fixed md:static inset-y-0 left-0 transform -translate-x-full md:translate-x-0">
+        <!-- Sidebar Header -->
+        <div class="h-16 flex items-center justify-between px-4 border-b border-[#303134] md:border-transparent">
+            <button id="close-sidebar-btn" class="p-2 text-gray-400 hover:text-white rounded-full hover:bg-[#2a2b2d] md:hidden">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
+            </button>
+            <span class="text-lg font-medium tracking-tight bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent font-bold">Nexus Menu</span>
         </div>
-        <div class="flex items-center gap-4">
-            <span class="text-xs text-gray-500 hidden md:block">Local Qwen2.5 (350M)</span>
-            <div class="w-8 h-8 rounded-full bg-[#3c4043] flex items-center justify-center text-sm font-semibold text-white">
-                U
-            </div>
-        </div>
-    </header>
 
-    <!-- Main Container -->
-    <main class="flex-1 relative overflow-hidden flex flex-col items-center">
-        
-        <!-- Booting Overlay / Downloader -->
-        <div id="loading-screen" class="absolute inset-0 bg-[#0f1114] z-20 flex flex-col items-center justify-center p-6 transition-all duration-700">
-            <div class="max-w-md w-full text-center">
-                <!-- Glowing Pulsing Sparkle SVG -->
-                <div class="w-16 h-16 mx-auto mb-8 text-indigo-400 status-glow">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-full h-full">
-                        <path d="M11.645 20.91l-.007-.003-.003-.001a1.99 1.99 0 01-.194-.124c-.201-.15-.46-.395-.717-.745-.515-.7-1.002-1.748-1.344-3.085a11.91 11.91 0 01-.334-1.745l-.014-.114-.114-.014a11.91 11.91 0 01-1.745-.334c-1.337-.342-2.385-.829-3.085-1.344-.35-.257-.594-.516-.745-.717a1.99 1.99 0 01-.125-.194L3.1 12.35l.001-.003.003-.007a2.078 2.078 0 01.353-.45c.29-.272.71-.588 1.258-.92 1.096-.665 2.585-1.348 4.298-1.638l.142-.024.024-.142c.29-1.713.973-3.202 1.638-4.298.332-.548.648-.967.92-1.258a2.078 2.078 0 01.453-.353l.006-.003.004-.001a1.99 1.99 0 01.194.124c.201.15.46.395.717.745.515.7 1.002 1.748 1.344 3.085.122.48.234.962.334 1.745l.014.114.114.014c.783.1 1.265.212 1.745.334 1.337.342 2.385.829 3.085 1.344.35.257.594.516.745.717.043.058.086.124.125.194l.007.003.003.001a2.078 2.078 0 01-.353.45c-.29.272-.71.588-1.258.92-1.096.665-2.585 1.348-4.298 1.638l-.142.024-.024.142c-.29 1.713-.973 3.202-1.638 4.298-.332.548-.648.967-.92 1.258a2.078 2.078 0 01-.453.353z" />
-                    </svg>
-                </div>
-                <h2 class="text-3xl font-medium tracking-tight mb-3">Initializing Nexus Engine</h2>
-                <p class="text-gray-400 text-sm mb-8 leading-relaxed">Securing model weights (~350MB) directly in your secure local sandbox. Runs completely offline once completed.</p>
-                
-                <!-- Progress bar and indicators -->
-                <div class="w-full bg-[#1e1f20] rounded-full h-2 mb-3 overflow-hidden border border-[#303134]">
-                    <div id="progress-bar" class="bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-600 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
-                </div>
-                <p id="progress-text" class="text-xs font-mono text-gray-500">Connecting to model distribution...</p>
+        <!-- Start New Chat Action -->
+        <div class="px-3.5 py-4">
+            <button id="new-chat-btn" class="w-full flex items-center gap-3 px-4 py-3 bg-[#131314] hover:bg-[#2a2b2d] border border-[#303134] rounded-full text-sm font-medium text-gray-300 hover:text-white transition-all">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5 text-indigo-400"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
+                <span>New chat</span>
+            </button>
+        </div>
+
+        <!-- Saved Chats List -->
+        <div class="flex-1 overflow-y-auto px-2 space-y-1">
+            <div class="px-3.5 text-xs font-semibold text-gray-500 tracking-wider uppercase mb-2">Recent Chats</div>
+            <div id="chats-list-container" class="space-y-0.5">
+                <!-- Chat nodes injected dynamically here -->
+                <div class="text-xs text-gray-500 px-4 py-2 italic">Loading save states...</div>
             </div>
         </div>
 
-        <!-- Chat Frame -->
-        <div id="chat-frame" class="w-full max-w-4xl flex-1 flex flex-col justify-between overflow-hidden relative px-4 md:px-6">
+        <!-- User profile details & Sign-out / Session indicator -->
+        <div class="p-4 border-t border-[#303134] bg-[#1a1b1c] text-xs text-gray-400 flex items-center gap-3">
+            <div class="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-white font-bold text-sm">U</div>
+            <div class="flex-1 min-w-0">
+                <p class="font-medium text-gray-300 truncate" id="user-id-display">Connecting Account...</p>
+                <p class="text-[10px] text-gray-500">Cloud Sync Active</p>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Overlay for mobile menu drawer -->
+    <div id="sidebar-overlay" class="fixed inset-0 bg-black/60 z-10 hidden md:hidden"></div>
+
+    <!-- Main Workspace Frame -->
+    <div class="flex-1 flex flex-col h-screen overflow-hidden relative">
+
+        <!-- Top Navbar -->
+        <header class="h-16 flex items-center justify-between px-4 md:px-6 z-10 bg-[#131314] border-b border-[#202124]">
+            <div class="flex items-center gap-3">
+                <button id="menu-toggle-btn" class="p-2 text-gray-400 hover:text-white rounded-full hover:bg-[#2a2b2d]">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" /></svg>
+                </button>
+                <span class="text-xl font-medium tracking-tight bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-500 bg-clip-text text-transparent font-semibold">Nexus AI</span>
+            </div>
+            <div class="flex items-center gap-4">
+                <span id="speed-indicator" class="text-xs text-gray-500 hidden sm:block">Local Engine Loading...</span>
+                <div class="w-8 h-8 rounded-full bg-[#3c4043] flex items-center justify-center text-sm font-semibold text-white">
+                    U
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Workspace Viewport -->
+        <main class="flex-1 relative overflow-hidden flex flex-col items-center">
             
-            <!-- Empty state (Initial screen) -->
-            <div id="welcome-container" class="flex-1 flex flex-col justify-center items-center py-12 select-none overflow-y-auto">
-                <div class="text-center max-w-2xl mb-12">
-                    <h1 class="text-5xl font-medium tracking-tight mb-4 leading-tight">
-                        <span class="bg-gradient-to-r from-blue-400 via-purple-400 to-pink-500 bg-clip-text text-transparent font-bold">Hello, I'm Nexus</span>
-                    </h1>
-                    <p class="text-gray-400 text-lg">How can I help you today?</p>
-                </div>
-
-                <!-- Idea Cards Grid -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full max-w-3xl px-4">
-                    <div onclick="fillAndSend('Explain the theory of relativity in one simple sentence.')" class="bg-[#1e1f20] hover:bg-[#2a2b2d] border border-[#303134] rounded-2xl p-5 cursor-pointer transition-all duration-200 group flex flex-col justify-between h-36">
-                        <p class="text-sm text-gray-300 leading-relaxed group-hover:text-white">Explain relativity in one simple sentence</p>
-                        <div class="self-end p-2 bg-[#131314] rounded-full text-indigo-400 border border-[#303134]">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" d="M12 18.75a6 6 0 0 0 6-6v-1.5m-6 7.5a6 6 0 0 1-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 0 1-3-3V4.5a3 3 0 1 1 6 0v8.25a3 3 0 0 1-3 3Z"/></svg>
-                        </div>
+            <!-- Booting Overlay / Downloader -->
+            <div id="loading-screen" class="absolute inset-0 bg-[#0f1114] z-30 flex flex-col items-center justify-center p-6 transition-all duration-700">
+                <div class="max-w-md w-full text-center">
+                    <!-- Glowing Pulsing Sparkle SVG -->
+                    <div class="w-16 h-16 mx-auto mb-8 text-indigo-400 status-glow">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-full h-full">
+                            <path d="M11.645 20.91l-.007-.003-.003-.001a1.99 1.99 0 01-.194-.124c-.201-.15-.46-.395-.717-.745-.515-.7-1.002-1.748-1.344-3.085a11.91 11.91 0 01-.334-1.745l-.014-.114-.114-.014a11.91 11.91 0 01-1.745-.334c-1.337-.342-2.385-.829-3.085-1.344-.35-.257-.594-.516-.745-.717a1.99 1.99 0 01-.125-.194L3.1 12.35l.001-.003.003-.007a2.078 2.078 0 01.353-.45c.29-.272.71-.588 1.258-.92 1.096-.665 2.585-1.348 4.298-1.638l.142-.024.024-.142c.29-1.713.973-3.202 1.638-4.298.332-.548.648-.967.92-1.258a2.078 2.078 0 01.453-.353l.006-.003.004-.001a1.99 1.99 0 01.194.124c.201.15.46.395.717.745.515.7 1.002 1.748 1.344 3.085.122.48.234.962.334 1.745l.014.114.114.014c.783.1 1.265.212 1.745.334 1.337.342 2.385.829 3.085 1.344.35.257.594.516.745.717.043.058.086.124.125.194l.007.003.003.001a2.078 2.078 0 01-.353.45c-.29.272-.71.588-1.258.92-1.096.665-2.585 1.348-4.298 1.638l-.142.024-.024.142c-.29 1.713-.973 3.202-1.638 4.298-.332.548-.648.967-.92 1.258a2.078 2.078 0 01-.453.353z" />
+                        </svg>
                     </div>
-                    <div onclick="fillAndSend('Draft a highly concise pitch for a local web-browsing AI assistant.')" class="bg-[#1e1f20] hover:bg-[#2a2b2d] border border-[#303134] rounded-2xl p-5 cursor-pointer transition-all duration-200 group flex flex-col justify-between h-36">
-                        <p class="text-sm text-gray-300 leading-relaxed group-hover:text-white">Write a quick elevator pitch for an offline AI app</p>
-                        <div class="self-end p-2 bg-[#131314] rounded-full text-indigo-400 border border-[#303134]">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" /></svg>
-                        </div>
+                    <h2 class="text-3xl font-medium tracking-tight mb-3">Initializing Nexus Engine</h2>
+                    <p class="text-gray-400 text-sm mb-8 leading-relaxed">Securing model weights (~350MB) directly in your secure local sandbox. Runs completely offline once completed.</p>
+                    
+                    <!-- Progress bar and indicators -->
+                    <div class="w-full bg-[#1e1f20] rounded-full h-2 mb-3 overflow-hidden border border-[#303134]">
+                        <div id="progress-bar" class="bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-600 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
                     </div>
-                    <div onclick="fillAndSend('What is the fast inverse square root constant and its magic value?')" class="bg-[#1e1f20] hover:bg-[#2a2b2d] border border-[#303134] rounded-2xl p-5 cursor-pointer transition-all duration-200 group flex flex-col justify-between h-36">
-                        <p class="text-sm text-gray-300 leading-relaxed group-hover:text-white">Describe the fast inverse square root magic constant</p>
-                        <div class="self-end p-2 bg-[#131314] rounded-full text-indigo-400 border border-[#303134]">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" d="M17.25 6.75 22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3-4.5 16.5" /></svg>
-                        </div>
-                    </div>
-                    <div onclick="fillAndSend('Who was Alan Turing? Keep it to one short sentence.')" class="bg-[#1e1f20] hover:bg-[#2a2b2d] border border-[#303134] rounded-2xl p-5 cursor-pointer transition-all duration-200 group flex flex-col justify-between h-36">
-                        <p class="text-sm text-gray-300 leading-relaxed group-hover:text-white">Who was Alan Turing? (Concise summary)</p>
-                        <div class="self-end p-2 bg-[#131314] rounded-full text-indigo-400 border border-[#303134]">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" /></svg>
-                        </div>
-                    </div>
+                    <p id="progress-text" class="text-xs font-mono text-gray-500">Connecting to model distribution...</p>
                 </div>
             </div>
 
-            <!-- Active Chat History Area -->
-            <div id="chat-container" class="flex-1 overflow-y-auto py-4 hidden">
-                <!-- Messages dynamically generated -->
-            </div>
-
-            <!-- Floating Input Area -->
-            <div class="py-4 bg-gradient-to-t from-[#131314] via-[#131314] to-transparent sticky bottom-0">
-                <div class="relative max-w-3xl mx-auto w-full flex flex-col">
-                    <div class="flex items-center bg-[#1e1f20] rounded-full px-6 py-2 border border-[#303134] shadow-2xl focus-within:border-gray-500 transition-all">
-                        <input 
-                            type="text" 
-                            id="user-input" 
-                            placeholder="Ask Nexus..." 
-                            class="flex-1 bg-transparent border-0 outline-none text-gray-100 py-3 text-[15px] placeholder-gray-500"
-                            autocomplete="off"
-                            disabled
-                        >
-                        <button 
-                            id="send-btn" 
-                            class="p-2.5 text-indigo-400 hover:text-white disabled:opacity-30 disabled:hover:text-indigo-400 transition-colors rounded-full hover:bg-[#2a2b2d]"
-                            disabled
-                        >
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5">
-                                <path d="M3.478 2.405a.75.75 0 00-.926.94l2.432 7.905H13.5a.75.75 0 010 1.5H4.984l-2.432 7.905a.75.75 0 00.926.94 60.519 60.519 0 0018.445-8.986.75.75 0 000-1.218A60.517 60.517 0 003.478 2.405z" />
-                            </svg>
-                        </button>
+            <!-- Chat Frame -->
+            <div id="chat-frame" class="w-full max-w-4xl flex-1 flex flex-col justify-between overflow-hidden relative px-4 md:px-6">
+                
+                <!-- Empty state (Initial screen) -->
+                <div id="welcome-container" class="flex-1 flex flex-col justify-center items-center py-12 select-none overflow-y-auto">
+                    <div class="text-center max-w-2xl mb-12">
+                        <h1 class="text-5xl font-medium tracking-tight mb-4 leading-tight">
+                            <span class="bg-gradient-to-r from-blue-400 via-purple-400 to-pink-500 bg-clip-text text-transparent font-bold">Hello, I'm Nexus</span>
+                        </h1>
+                        <p class="text-gray-400 text-lg">How can I help you today?</p>
                     </div>
-                    <span class="text-[10px] text-gray-500 text-center mt-2 tracking-wide">Nexus AI generates local, high-speed, private answers using WebGPU and Web Workers.</span>
+
+                    <!-- Idea Cards Grid -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full max-w-3xl px-4">
+                        <div onclick="fillAndSend('Explain the theory of relativity in one simple sentence.')" class="bg-[#1e1f20] hover:bg-[#2a2b2d] border border-[#303134] rounded-2xl p-5 cursor-pointer transition-all duration-200 group flex flex-col justify-between h-36">
+                            <p class="text-sm text-gray-300 leading-relaxed group-hover:text-white">Explain relativity in one simple sentence</p>
+                            <div class="self-end p-2 bg-[#131314] rounded-full text-indigo-400 border border-[#303134]">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" d="M12 18.75a6 6 0 0 0 6-6v-1.5m-6 7.5a6 6 0 0 1-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 0 1-3-3V4.5a3 3 0 1 1 6 0v8.25a3 3 0 0 1-3 3Z"/></svg>
+                            </div>
+                        </div>
+                        <div onclick="fillAndSend('Draft a highly concise pitch for a local web-browsing AI assistant.')" class="bg-[#1e1f20] hover:bg-[#2a2b2d] border border-[#303134] rounded-2xl p-5 cursor-pointer transition-all duration-200 group flex flex-col justify-between h-36">
+                            <p class="text-sm text-gray-300 leading-relaxed group-hover:text-white">Write a quick elevator pitch for an offline AI app</p>
+                            <div class="self-end p-2 bg-[#131314] rounded-full text-indigo-400 border border-[#303134]">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" /></svg>
+                            </div>
+                        </div>
+                        <div onclick="fillAndSend('What is the fast inverse square root constant and its magic value?')" class="bg-[#1e1f20] hover:bg-[#2a2b2d] border border-[#303134] rounded-2xl p-5 cursor-pointer transition-all duration-200 group flex flex-col justify-between h-36">
+                            <p class="text-sm text-gray-300 leading-relaxed group-hover:text-white">Describe the fast inverse square root magic constant</p>
+                            <div class="self-end p-2 bg-[#131314] rounded-full text-indigo-400 border border-[#303134]">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" d="M17.25 6.75 22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3-4.5 16.5" /></svg>
+                            </div>
+                        </div>
+                        <div onclick="fillAndSend('Who was Alan Turing? Keep it to one short sentence.')" class="bg-[#1e1f20] hover:bg-[#2a2b2d] border border-[#303134] rounded-2xl p-5 cursor-pointer transition-all duration-200 group flex flex-col justify-between h-36">
+                            <p class="text-sm text-gray-300 leading-relaxed group-hover:text-white">Who was Alan Turing? (Concise summary)</p>
+                            <div class="self-end p-2 bg-[#131314] rounded-full text-indigo-400 border border-[#303134]">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" /></svg>
+                            </div>
+                        </div>
+                    </div>
                 </div>
+
+                <!-- Active Chat History Area -->
+                <div id="chat-container" class="flex-1 overflow-y-auto py-4 hidden">
+                    <!-- Messages dynamically generated -->
+                </div>
+
+                <!-- Floating Input Area -->
+                <div class="py-4 bg-gradient-to-t from-[#131314] via-[#131314] to-transparent sticky bottom-0">
+                    <div class="relative max-w-3xl mx-auto w-full flex flex-col">
+                        <div class="flex items-center bg-[#1e1f20] rounded-full px-6 py-2 border border-[#303134] shadow-2xl focus-within:border-gray-500 transition-all">
+                            <input 
+                                type="text" 
+                                id="user-input" 
+                                placeholder="Ask Nexus..." 
+                                class="flex-1 bg-transparent border-0 outline-none text-gray-100 py-3 text-[15px] placeholder-gray-500"
+                                autocomplete="off"
+                                disabled
+                            >
+                            <button 
+                                id="send-btn" 
+                                class="p-2.5 text-indigo-400 hover:text-white disabled:opacity-30 disabled:hover:text-indigo-400 transition-colors rounded-full hover:bg-[#2a2b2d]"
+                                disabled
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5">
+                                    <path d="M3.478 2.405a.75.75 0 00-.926.94l2.432 7.905H13.5a.75.75 0 010 1.5H4.984l-2.432 7.905a.75.75 0 00.926.94 60.519 60.519 0 0018.445-8.986.75.75 0 000-1.218A60.517 60.517 0 003.478 2.405z" />
+                                </svg>
+                            </button>
+                        </div>
+                        <span class="text-[10px] text-gray-500 text-center mt-2 tracking-wide">Nexus AI generates local, high-speed, private answers using WebGPU and Web Workers.</span>
+                    </div>
+                </div>
+
             </div>
+        </main>
+    </div>
 
-        </div>
-    </main>
+    <!-- Firebase Script (Authentication and Firestore Persistence) -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc, collection, query, onSnapshot, addDoc, updateDoc, deleteDoc, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-    <!-- UI Interaction & Worker Script -->
-    <script>
+        // Global environment variables provided by sandbox
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = JSON.parse(__firebase_config);
+
+        // Init services
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
         // DOM Elements
         const chatContainer = document.getElementById('chat-container');
         const welcomeContainer = document.getElementById('welcome-container');
@@ -200,14 +266,246 @@
         const loadingScreen = document.getElementById('loading-screen');
         const progressBar = document.getElementById('progress-bar');
         const progressText = document.getElementById('progress-text');
+        const speedIndicator = document.getElementById('speed-indicator');
 
+        const sidebar = document.getElementById('sidebar');
+        const sidebarOverlay = document.getElementById('sidebar-overlay');
+        const menuToggleBtn = document.getElementById('menu-toggle-btn');
+        const closeSidebarBtn = document.getElementById('close-sidebar-btn');
+        const newChatBtn = document.getElementById('new-chat-btn');
+        const chatsListContainer = document.getElementById('chats-list-container');
+        const userIdDisplay = document.getElementById('user-id-display');
+
+        // State Machine
         let isGenerating = false;
         let currentTypingBubble = null;
+        let activeChatId = null; // Currently selected document ID in cloud
+        let userAuth = null;
+
+        // Base instructions
+        const SYSTEM_INSTRUCTIONS = "You are Nexus AI, a highly factual, extremely concise and straightforward assistant. Do NOT use emojis. Answer directly and cleanly. Keep responses short and avoid follow-up questions.";
         
-        // Chat history matching Qwen-instruct schema
         let chatHistory = [
-            { role: "system", content: "You are Nexus AI, a highly factual, extremely concise and straightforward assistant. Do NOT use emojis. Answer directly and cleanly. Keep responses short and avoid follow-up questions." }
+            { role: "system", content: SYSTEM_INSTRUCTIONS }
         ];
+
+        // Ensure global access for simple interactions (like idea cards clicking)
+        window.fillAndSend = function(text) {
+            userInput.value = text;
+            handleSend();
+        };
+
+        // UI Helpers
+        function toggleSidebar() {
+            sidebar.classList.toggle('-translate-x-full');
+            sidebarOverlay.classList.toggle('hidden');
+        }
+
+        menuToggleBtn.addEventListener('click', toggleSidebar);
+        closeSidebarBtn.addEventListener('click', toggleSidebar);
+        sidebarOverlay.addEventListener('click', toggleSidebar);
+
+        // Starts a brand new conversation state in-memory and UI
+        function createNewChat() {
+            activeChatId = null;
+            chatHistory = [{ role: "system", content: SYSTEM_INSTRUCTIONS }];
+            
+            // Clean UI back to welcome screen
+            chatContainer.innerHTML = '';
+            chatContainer.classList.add('hidden');
+            welcomeContainer.style.display = 'flex';
+            userInput.value = '';
+            userInput.focus();
+
+            // Refresh sidebar active styling
+            highlightActiveChat(null);
+
+            // On mobile close navigation
+            if (!sidebar.classList.contains('-translate-x-full')) {
+                toggleSidebar();
+            }
+        }
+
+        newChatBtn.addEventListener('click', createNewChat);
+
+        // Sync local chat state to Cloud (Firestore Rule 1 Compliance)
+        async function saveChatToCloud() {
+            if (!userAuth) return;
+
+            // Generate a readable title based on the first user query
+            const firstUserQuery = chatHistory.find(msg => msg.role === 'user')?.content || "New Conversation";
+            const cleanTitle = firstUserQuery.length > 28 ? firstUserQuery.substring(0, 25) + '...' : firstUserQuery;
+
+            // Prepare save object (must serialize nested systems properly)
+            const chatPayload = {
+                title: cleanTitle,
+                updatedAt: Date.now(),
+                history: chatHistory // Firestore supports primitive array objects cleanly
+            };
+
+            try {
+                if (activeChatId) {
+                    // Update existing
+                    const docRef = doc(db, 'artifacts', appId, 'users', userAuth.uid, 'chats', activeChatId);
+                    await setDoc(docRef, chatPayload, { merge: true });
+                } else {
+                    // Create new
+                    const collectionRef = collection(db, 'artifacts', appId, 'users', userAuth.uid, 'chats');
+                    const docRef = await addDoc(collectionRef, {
+                        ...chatPayload,
+                        createdAt: Date.now()
+                    });
+                    activeChatId = docRef.id;
+                    highlightActiveChat(activeChatId);
+                }
+            } catch (err) {
+                console.error("Cloud synchronization failed:", err);
+            }
+        }
+
+        // Delete conversation handler (Rule 1 Compliant)
+        async function deleteChatFromCloud(chatId, event) {
+            event.stopPropagation(); // Stop selection trigger
+            if (!userAuth) return;
+
+            try {
+                const docRef = doc(db, 'artifacts', appId, 'users', userAuth.uid, 'chats', chatId);
+                await deleteDoc(docRef);
+                if (activeChatId === chatId) {
+                    createNewChat();
+                }
+            } catch (err) {
+                console.error("Cloud destruction error:", err);
+            }
+        }
+
+        // Highlight selection state in UI sidebar
+        function highlightActiveChat(chatId) {
+            const children = chatsListContainer.querySelectorAll('[data-chat-id]');
+            children.forEach(el => {
+                if (el.getAttribute('data-chat-id') === chatId) {
+                    el.classList.add('bg-[#2a2b2d]', 'text-white');
+                    el.classList.remove('text-gray-400');
+                } else {
+                    el.classList.remove('bg-[#2a2b2d]', 'text-white');
+                    el.classList.add('text-gray-400');
+                }
+            });
+        }
+
+        // Load specific saved chat into UI
+        async function selectChat(chatId) {
+            if (!userAuth) return;
+            try {
+                const docRef = doc(db, 'artifacts', appId, 'users', userAuth.uid, 'chats', chatId);
+                const docSnap = await getDoc(docRef);
+                
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    activeChatId = chatId;
+                    chatHistory = data.history || [];
+
+                    // Rebuild UI conversation from array
+                    chatContainer.innerHTML = '';
+                    welcomeContainer.style.display = 'none';
+                    chatContainer.classList.remove('hidden');
+
+                    chatHistory.forEach(msg => {
+                        if (msg.role !== 'system') {
+                            addMessage(msg.content, msg.role === 'user');
+                        }
+                    });
+
+                    highlightActiveChat(chatId);
+
+                    // Close mobile sidebar menu if open
+                    if (!sidebar.classList.contains('-translate-x-full')) {
+                        toggleSidebar();
+                    }
+                }
+            } catch (err) {
+                console.error("Could not fetch cloud data:", err);
+            }
+        }
+
+        // Setup real-time listeners for navigation updates (Rule 1 & Rule 2 compliant - no compound orders)
+        function listenToSavedChats(userId) {
+            const collectionRef = collection(db, 'artifacts', appId, 'users', userId, 'chats');
+            
+            // Keep query perfectly simple to avoid complex indexing limits
+            onSnapshot(collectionRef, (snapshot) => {
+                chatsListContainer.innerHTML = '';
+
+                let chats = [];
+                snapshot.forEach(doc => {
+                    chats.push({ id: doc.id, ...doc.data() });
+                });
+
+                // Sort purely in memory to maintain extreme flexibility without complex queries (Rule 2)
+                chats.sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
+
+                if (chats.length === 0) {
+                    chatsListContainer.innerHTML = `<div class="text-[11px] text-gray-500 px-4 py-2 italic">No past sessions</div>`;
+                    return;
+                }
+
+                chats.forEach(chat => {
+                    const pill = document.createElement('div');
+                    pill.setAttribute('data-chat-id', chat.id);
+                    pill.className = `group flex items-center justify-between px-3.5 py-2.5 mx-2 rounded-xl cursor-pointer text-sm font-medium transition-all ${
+                        activeChatId === chat.id ? 'bg-[#2a2b2d] text-white' : 'text-gray-400 hover:bg-[#252627] hover:text-gray-200'
+                    }`;
+
+                    // Click event loads chat
+                    pill.addEventListener('click', () => selectChat(chat.id));
+
+                    // HTML structure containing title and trash deletion trigger
+                    pill.innerHTML = `
+                        <div class="flex items-center gap-2.5 min-w-0 flex-1">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4 text-gray-500 group-hover:text-indigo-400 transition-colors shrink-0"><path stroke-linecap="round" stroke-linejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 0 1 .865-.501 48.172 48.172 0 0 0 3.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0 0 12 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018Z" /></svg>
+                            <span class="truncate pr-2">${chat.title}</span>
+                        </div>
+                        <button class="opacity-0 group-hover:opacity-100 p-1 text-gray-500 hover:text-red-400 hover:bg-[#131314] rounded transition-all shrink-0" title="Delete chat">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-3.5 h-3.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
+                        </button>
+                    `;
+
+                    // Select and bind actual deletion logic safely
+                    pill.querySelector('button').addEventListener('click', (e) => deleteChatFromCloud(chat.id, e));
+
+                    chatsListContainer.appendChild(pill);
+                });
+            }, (error) => {
+                console.error("Firestore listening broken:", error);
+            });
+        }
+
+        // Initialize authentication flows (Rule 3 Compliance)
+        const initAuth = async () => {
+            try {
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+            } catch (err) {
+                console.error("Authentication setup failed:", err);
+            }
+        };
+
+        // Start checking authentication state
+        onAuthStateChanged(auth, (user) => {
+            userAuth = user;
+            if (user) {
+                // Render truncated account token name to display bar
+                userIdDisplay.innerText = `ID: ${user.uid.substring(0, 8)}...`;
+                
+                // Fetch saved chats and establish reactive socket
+                listenToSavedChats(user.uid);
+            }
+        });
+
+        initAuth();
 
         // Smoothly inject a message to the chat view
         function addMessage(text, isUser = false, isTyping = false) {
@@ -250,12 +548,6 @@
             chatContainer.appendChild(wrapper);
             chatContainer.scrollTop = chatContainer.scrollHeight;
             return wrapper.querySelector(isUser ? '.bg-\\[\\#2a2b2d\\]' : '.flex-1');
-        }
-
-        // Action/Suggestion cards function
-        function fillAndSend(text) {
-            userInput.value = text;
-            handleSend();
         }
 
         // ==========================================
@@ -347,6 +639,7 @@
 
             else if (action === 'ready') {
                 // UI transition from loader to main interface
+                speedIndicator.innerText = device === 'webgpu' ? 'WebGPU Accelerated 🚀' : 'CPU Computing Active';
                 loadingScreen.style.opacity = '0';
                 setTimeout(() => loadingScreen.style.display = 'none', 700);
                 userInput.disabled = false;
@@ -377,6 +670,9 @@
                         currentTypingBubble.innerText = answer;
                     }
                     chatHistory.push({ role: "assistant", content: currentTypingBubble.innerText });
+                    
+                    // Fire update to Firestore instantly
+                    saveChatToCloud();
                 }
                 currentTypingBubble = null;
             }
