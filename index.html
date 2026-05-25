@@ -348,17 +348,29 @@
                 });
 
                 if (!response.ok) {
-                    throw new Error(`HTTP Error: ${response.status}`);
+                    const errorData = await response.json().catch(() => ({}));
+                    const errorMessage = errorData.error?.message || `HTTP Error: ${response.status}`;
+                    
+                    // Don't retry on 4xx client errors (like invalid API key)
+                    if (response.status >= 400 && response.status < 500) {
+                       throw new Error(`API Error (${response.status}): ${errorMessage}`);
+                    }
+                    throw new Error(errorMessage);
                 }
 
                 const data = await response.json();
                 return data.candidates?.[0]?.content?.parts?.[0]?.text || "Sorry, I generated an empty response.";
             } catch (error) {
+                // If it's a 4xx client error, propagate it immediately without retrying
+                if (error.message.includes("API Error")) {
+                    throw error;
+                }
+
                 if (retries > 0) {
                     await new Promise(resolve => setTimeout(resolve, backoff));
                     return fetchGeminiResponse(conversationHistory, retries - 1, backoff * 2);
                 } else {
-                    throw new Error("I'm having trouble connecting to the network right now. Please try again in a moment.");
+                    throw new Error(`Connection issue: ${error.message}. Please try again.`);
                 }
             }
         }
