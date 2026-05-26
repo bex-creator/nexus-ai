@@ -519,9 +519,13 @@
             import { pipeline, env, TextStreamer } from 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.0.0/dist/transformers.min.js';
 
             env.allowLocalModels = false;
-            env.backends.onnx.wasm.numThreads = navigator.hardwareConcurrency ? Math.min(navigator.hardwareConcurrency, 4) : 1;
+            
+            // OPTIMIZATION: Cap the fallback CPU thread pools to max 2 threads for Chromebooks.
+            // Spawning 4 active compilation/inference loops completely freezes Celeron-class cores.
+            env.backends.onnx.wasm.numThreads = navigator.hardwareConcurrency ? Math.min(navigator.hardwareConcurrency, 2) : 1;
 
             let aiPipeline = null;
+            let lastProgressSent = 0; // Throttle state
 
             self.onmessage = async function(e) {
                 const { action, payload } = e.data;
@@ -534,7 +538,13 @@
                             device: deviceToUse,
                             dtype: 'q4',
                             progress_callback: (data) => {
-                                self.postMessage({ action: 'progress', data });
+                                const now = Date.now();
+                                // OPTIMIZATION: Only post status back to the main UI thread at most once every 100ms.
+                                // Prevents browser frame locks and excessive IPC overhead on Chromebooks.
+                                if (now - lastProgressSent > 100 || data.status === 'done' || data.status === 'initiate') {
+                                    self.postMessage({ action: 'progress', data });
+                                    lastProgressSent = now;
+                                }
                             }
                         });
                         self.postMessage({ action: 'ready', device: deviceToUse });
@@ -599,7 +609,7 @@
             }
 
             else if (action === 'ready') {
-                speedIndicator.innerText = device === 'webgpu' ? 'WebGPU Accelerated 🚀' : 'CPU Computing Active';
+                speedIndicator.innerText = device === 'webgpu' ? 'WebGPU Accelerated 🚀' : 'CPU Computing Active (Chromebook Optimizations Enabled)';
                 loadingScreen.style.opacity = '0';
                 setTimeout(() => loadingScreen.style.display = 'none', 700);
                 userInput.disabled = false;
