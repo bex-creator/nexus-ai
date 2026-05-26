@@ -1,5 +1,5 @@
-// Classic web-worker loading script
-importScripts('[https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.0.0/dist/transformers.js](https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.0.0/dist/transformers.js)');
+// Classic web-worker loading script - Fixed CDN URL
+importScripts('https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.0.0/dist/transformers.js');
 
 const { pipeline, env, TextStreamer } = self.transformers;
 
@@ -10,10 +10,10 @@ env.backends.onnx.wasm.numThreads = 1;
 
 // Fully bypass complex optimizations to prevent memory-related crashes
 env.backends.onnx.session_options = {
-    graphOptimizationLevel: 'disabled', 
-    enableCpuMemArena: false,          
-    enableMemPattern: false,           
-    executionMode: 'sequential'        
+    graphOptimizationLevel: 'none', // Fixed: Changed 'disabled' to 'none'
+    enableCpuMemArena: false,       
+    enableMemPattern: false,        
+    executionMode: 'sequential'     
 };
 
 let aiPipeline = null;
@@ -24,7 +24,8 @@ self.onmessage = async function(e) {
 
     if (action === 'load') {
         try {
-            const deviceToUse = navigator.gpu ? 'webgpu' : 'wasm';
+            // Safely check for WebGPU availability in the worker context
+            const deviceToUse = (typeof navigator !== 'undefined' && navigator.gpu) ? 'webgpu' : 'wasm';
             const modelPath = payload?.model || 'onnx-community/Qwen2.5-0.5B-Instruct';
 
             aiPipeline = await pipeline('text-generation', modelPath, {
