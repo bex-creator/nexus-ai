@@ -520,9 +520,16 @@
 
             env.allowLocalModels = false;
             
-            // OPTIMIZATION: Cap the fallback CPU thread pools to max 2 threads for Chromebooks.
-            // Spawning 4 active compilation/inference loops completely freezes Celeron-class cores.
-            env.backends.onnx.wasm.numThreads = navigator.hardwareConcurrency ? Math.min(navigator.hardwareConcurrency, 2) : 1;
+            // OPTIMIZATION 1: Strictly enforce 1 thread. Multi-threaded WASM triggers heavy allocation overhead on Chrome OS.
+            env.backends.onnx.wasm.numThreads = 1;
+
+            // OPTIMIZATION 2: Restrict ONNX session engine's graph optimizer memory footprints.
+            // Prevents the compiler from hitting Chrome OS process tab memory limits and crashing.
+            env.backends.onnx.session_options = {
+                graphOptimizationLevel: 'basic', // Skip memory-heavy optimization passes
+                enableCpuMemArena: false,       // Prevent pre-allocating large memory buffer blocks
+                enableMemPattern: false          // Disable memory pattern planning to keep heap size small
+            };
 
             let aiPipeline = null;
             let lastProgressSent = 0; // Throttle state
@@ -539,8 +546,7 @@
                             dtype: 'q4',
                             progress_callback: (data) => {
                                 const now = Date.now();
-                                // OPTIMIZATION: Only post status back to the main UI thread at most once every 100ms.
-                                // Prevents browser frame locks and excessive IPC overhead on Chromebooks.
+                                // OPTIMIZATION 3: Throttle progress reports to UI to prevent execution lag.
                                 if (now - lastProgressSent > 100 || data.status === 'done' || data.status === 'initiate') {
                                     self.postMessage({ action: 'progress', data });
                                     lastProgressSent = now;
@@ -604,12 +610,12 @@
                     progressBar.style.width = `${percent}%`;
                     progressText.innerText = `Fetching weights: ${Math.round(percent)}%`;
                 } else if (data.status === 'done') {
-                    progressText.innerText = `Optimizing pipeline architecture...`;
+                    progressText.innerText = `Optimizing pipeline architecture (Safe Memory Mode)...`;
                 }
             }
 
             else if (action === 'ready') {
-                speedIndicator.innerText = device === 'webgpu' ? 'WebGPU Accelerated 🚀' : 'CPU Computing Active (Chromebook Optimizations Enabled)';
+                speedIndicator.innerText = device === 'webgpu' ? 'WebGPU Accelerated 🚀' : 'CPU Computing Active (Chromebook Safe Memory Mode)';
                 loadingScreen.style.opacity = '0';
                 setTimeout(() => loadingScreen.style.display = 'none', 700);
                 userInput.disabled = false;
