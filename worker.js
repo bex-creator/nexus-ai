@@ -1,17 +1,22 @@
-// Classic web-worker loading script
+// Global catch-all for hidden crashes that cause the worker to freeze silently
+self.onerror = function(message, source, lineno, colno, error) {
+    self.postMessage({ action: 'error', error: `Worker Crash: ${message} at line ${lineno}` });
+};
+
+self.onunhandledrejection = function(event) {
+    self.postMessage({ action: 'error', error: `Uncaught Promise Freeze: ${event.reason}` });
+};
+
+// Load Transformers.js v3
 importScripts('https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.0.0/dist/transformers.js');
 
 const { pipeline, env, TextStreamer } = self.transformers;
 
-// 1. BYPASS SCHOOL FIREWALLS
-// Forces the engine to use a mirror instead of huggingface.co
+// Allow standard Hugging Face distribution downloads for personal networks
 env.allowLocalModels = false;
-env.remoteHost = 'https://hf-mirror.com'; 
 
-// Optimize CPU threading profile for Chromebooks
+// Optimize CPU threading profile strictly for Chromebook architectures
 env.backends.onnx.wasm.numThreads = 1;
-
-// Fully bypass complex optimizations to prevent memory-related crashes
 env.backends.onnx.session_options = {
     graphOptimizationLevel: 'none', 
     enableCpuMemArena: false,       
@@ -27,31 +32,42 @@ self.onmessage = async function(e) {
 
     if (action === 'load') {
         try {
-            const deviceToUse = (typeof navigator !== 'undefined' && navigator.gpu) ? 'webgpu' : 'wasm';
-            
-            // Default to Qwen, but allow the main script to pass a ultra-low RAM model
+            // FORCE WASM FALLBACK FIRST: If WebGPU is unstable on this Chromebook, 
+            // allow the main UI thread to pass "forceWasm: true" to prevent hardware lockup.
+            let deviceToUse = 'wasm';
+            if (!payload?.forceWasm && typeof navigator !== 'undefined' && navigator.gpu) {
+                deviceToUse = 'webgpu';
+            }
+
             const modelPath = payload?.model || 'onnx-community/Qwen2.5-0.5B-Instruct';
+            
+            // Let the main thread know the worker is alive and starting execution
+            self.postMessage({ action: 'progress', data: { status: 'initiate', message: `Initializing engine on ${deviceToUse}...` } });
+
+            // In WebGPU mode, Transformers v3 prefers 'q4f16' or 'fp16'. For WASM, 'q4' or 'q8'.
+            const dtypeToUse = (deviceToUse === 'webgpu') ? 'q4f16' : 'q4';
 
             aiPipeline = await pipeline('text-generation', modelPath, {
                 device: deviceToUse,
-                dtype: 'q4',
+                dtype: dtypeToUse,
                 progress_callback: (data) => {
                     const now = Date.now();
-                    if (now - lastProgressSent > 100 || data.status === 'done' || data.status === 'initiate') {
+                    if (now - lastProgressSent > 50 || data.status === 'done') {
                         self.postMessage({ action: 'progress', data });
                         lastProgressSent = now;
                     }
                 }
             });
+            
             self.postMessage({ action: 'ready', device: deviceToUse, model: modelPath });
         } catch (err) {
-            self.postMessage({ action: 'error', error: err.message || String(err) });
+            self.postMessage({ action: 'error', error: `Pipeline Engine Error: ${err.message || String(err)}` });
         }
     }
 
     if (action === 'generate') {
         if (!aiPipeline) {
-            self.postMessage({ action: 'error', error: 'Nexus engine missing initialization.' });
+            self.postMessage({ action: 'error', error: 'Pipeline not initialized.' });
             return;
         }
 
