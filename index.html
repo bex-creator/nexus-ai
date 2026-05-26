@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nexus AI</title>
+    <title>Nexus AI - Chromebook Optimized</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
@@ -85,7 +85,7 @@
 </head>
 <body class="text-gray-200 h-screen flex overflow-hidden antialiased">
 
-    <!-- Left Navigation Sidebar (Gemini style) -->
+    <!-- Left Navigation Sidebar -->
     <aside id="sidebar" class="w-72 bg-[#1e1f20] border-r border-[#303134] flex flex-col z-20 sidebar-transition fixed md:static inset-y-0 left-0 transform -translate-x-full md:translate-x-0">
         <!-- Sidebar Header -->
         <div class="h-16 flex items-center justify-between px-4 border-b border-[#303134] md:border-transparent">
@@ -107,8 +107,17 @@
         <div class="flex-1 overflow-y-auto px-2 space-y-1">
             <div class="px-3.5 text-xs font-semibold text-gray-500 tracking-wider uppercase mb-2">Recent Chats</div>
             <div id="chats-list-container" class="space-y-0.5">
-                <!-- Chat nodes injected dynamically here -->
                 <div class="text-xs text-gray-500 px-4 py-2 italic">Loading save states...</div>
+            </div>
+        </div>
+
+        <!-- Active Engine Profile Card -->
+        <div class="p-4 mx-2 mb-2 border border-[#303134] rounded-xl bg-[#131314] text-xs">
+            <p class="text-gray-400 font-semibold mb-1">Active Model:</p>
+            <p id="active-model-sidebar" class="text-indigo-400 font-mono truncate">Not Loaded</p>
+            <div class="mt-2 flex items-center gap-1.5 text-[11px] text-gray-500">
+                <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                <span>Optimized Cache (Max 4 turns)</span>
             </div>
         </div>
 
@@ -137,7 +146,7 @@
                 <span id="header-brand" class="text-xl font-medium tracking-tight bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-500 bg-clip-text text-transparent font-semibold">Nexus AI</span>
             </div>
             <div class="flex items-center gap-4">
-                <span id="speed-indicator" class="text-xs text-gray-500 hidden sm:block">Local Engine Loading...</span>
+                <span id="speed-indicator" class="text-xs text-gray-500 hidden sm:block">Awaiting Selection...</span>
                 <div class="w-8 h-8 rounded-full bg-[#3c4043] flex items-center justify-center text-sm font-semibold text-white">
                     U
                 </div>
@@ -147,31 +156,47 @@
         <!-- Main Workspace Viewport -->
         <main class="flex-1 relative overflow-hidden flex flex-col items-center">
             
-            <!-- Booting Overlay / Downloader -->
-            <div id="loading-screen" class="absolute inset-0 bg-[#0f1114] z-30 flex flex-col items-center justify-center p-6 transition-all duration-700">
-                <div class="max-w-md w-full text-center">
-                    <!-- Glowing Pulsing Sparkle SVG -->
-                    <div class="w-16 h-16 mx-auto mb-8 text-indigo-400 status-glow">
+            <!-- Model Selection & Boot Screen -->
+            <div id="loading-screen" class="absolute inset-0 bg-[#0f1114] z-30 flex flex-col items-center justify-center p-6 transition-all duration-700 overflow-y-auto">
+                <div class="max-w-xl w-full text-center">
+                    <div class="w-16 h-16 mx-auto mb-6 text-indigo-400 status-glow">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-full h-full">
                             <path d="M11.645 20.91l-.007-.003-.003-.001a1.99 1.99 0 01-.194-.124c-.201-.15-.46-.395-.717-.745-.515-.7-1.002-1.748-1.344-3.085a11.91 11.91 0 01-.334-1.745l-.014-.114-.114-.014a11.91 11.91 0 01-1.745-.334c-1.337-.342-2.385-.829-3.085-1.344-.35-.257-.594-.516-.745-.717a1.99 1.99 0 01-.125-.194L3.1 12.35l.001-.003.003-.007a2.078 2.078 0 01.353-.45c.29-.272.71-.588 1.258-.92 1.096-.665 2.585-1.348 4.298-1.638l.142-.024.024-.142c.29-1.713.973-3.202 1.638-4.298.332-.548.648-.967.92-1.258a2.078 2.078 0 01.453-.353l.006-.003.004-.001a1.99 1.99 0 01.194.124c.201.15.46.395.717.745.515.7 1.002 1.748 1.344 3.085.122.48.234.962.334 1.745l.014.114.114.014c.783.1 1.265.212 1.745.334 1.337.342 2.385.829 3.085 1.344.35.257.594.516.745.717.043.058.086.124.125.194l.007.003.003.001a2.078 2.078 0 01-.353.45c-.29.272-.71.588-1.258.92-1.096.665-2.585 1.348-4.298 1.638l-.142.024-.024.142c-.29 1.713-.973 3.202-1.638 4.298-.332.548-.648.967-.92 1.258a2.078 2.078 0 01-.453.353z" />
                         </svg>
                     </div>
-                    <h2 class="text-3xl font-medium tracking-tight mb-3">Initializing Nexus Engine</h2>
-                    <p class="text-gray-400 text-sm mb-6 leading-relaxed">Securing model weights directly in your secure local sandbox. Runs completely offline once completed.</p>
+                    <h2 class="text-3xl font-medium tracking-tight mb-2">Initialize Nexus Offline Engine</h2>
+                    <p class="text-gray-400 text-sm mb-6 leading-relaxed">Runs 100% locally on your device. Choose a model sized correctly for your device to prevent tab crashes.</p>
                     
-                    <!-- Progress bar and indicators -->
-                    <div class="w-full bg-[#1e1f20] rounded-full h-2 mb-3 overflow-hidden border border-[#303134]">
-                        <div id="progress-bar" class="bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-600 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
-                    </div>
-                    <p id="progress-text" class="text-xs font-mono text-gray-500 mb-6">Connecting to model distribution...</p>
+                    <!-- Choice Interface -->
+                    <div id="choice-panel" class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-left mb-6">
+                        <!-- Ultra-Lite Choice -->
+                        <div onclick="selectAndBoot('onnx-community/smollm2-135m-instruct')" class="border border-indigo-500/50 bg-indigo-950/20 hover:bg-indigo-900/30 p-5 rounded-2xl cursor-pointer transition-all group relative">
+                            <span class="absolute top-3 right-3 bg-indigo-500 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded">Highly Recommended</span>
+                            <h3 class="font-bold text-gray-200 group-hover:text-white flex items-center gap-2">
+                                <span>Ultra-Lite Engine</span>
+                            </h3>
+                            <p class="text-[11px] text-indigo-300 font-mono mt-0.5">SmolLM2-135M (~90MB Download)</p>
+                            <p class="text-xs text-gray-400 mt-2.5 leading-relaxed">Perfect for 2GB-4GB RAM School Chromebooks. Starts almost instantly, runs extremely fast, and will not cause tab memory crashes.</p>
+                        </div>
 
-                    <!-- CHROMBOOK SAFE MODE SWAP BUTTON -->
-                    <div class="border border-dashed border-[#303134] rounded-2xl p-4 bg-[#18191a] text-left">
-                        <p class="text-xs font-semibold text-amber-400 mb-1">Running on a low-end School Chromebook?</p>
-                        <p class="text-[11px] text-gray-400 mb-3">If your screen freezes or crashes during "Optimizing", your device is running out of memory. Try our ultra-low RAM mode.</p>
-                        <button onclick="switchToUltraLowMode()" class="w-full py-2 px-4 bg-amber-600 hover:bg-amber-500 text-white rounded-xl text-xs font-bold transition-colors shadow">
-                            Enable Ultra-Low RAM Safe Mode (135M Model)
-                        </button>
+                        <!-- Standard Choice -->
+                        <div onclick="selectAndBoot('onnx-community/Qwen2.5-0.5B-Instruct')" class="border border-[#303134] bg-[#18191a] hover:bg-[#252627] hover:border-gray-500 p-5 rounded-2xl cursor-pointer transition-all group">
+                            <h3 class="font-bold text-gray-300 group-hover:text-white">Standard Engine</h3>
+                            <p class="text-[11px] text-gray-500 font-mono mt-0.5">Qwen2.5-0.5B (~260MB Download)</p>
+                            <p class="text-xs text-gray-400 mt-2.5 leading-relaxed">Better reasoning capability. Best suited for high-end Chromebooks (4GB+ RAM) with stable network connections.</p>
+                        </div>
+                    </div>
+
+                    <!-- Boot Progress (Hidden at start) -->
+                    <div id="progress-panel" class="hidden text-center max-w-md mx-auto">
+                        <div class="w-full bg-[#1e1f20] rounded-full h-2 mb-3 overflow-hidden border border-[#303134]">
+                            <div id="progress-bar" class="bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-600 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+                        </div>
+                        <p id="progress-text" class="text-xs font-mono text-gray-500 mb-6">Awaiting selection...</p>
+                    </div>
+
+                    <div class="text-[11px] text-gray-500">
+                        *Models are safely stored in your browser's private cache workspace after downloading.
                     </div>
                 </div>
             </div>
@@ -181,34 +206,34 @@
                 
                 <!-- Empty state (Initial screen) -->
                 <div id="welcome-container" class="flex-1 flex flex-col justify-center items-center py-12 select-none overflow-y-auto">
-                    <div class="text-center max-w-2xl mb-12">
+                    <div class="text-center max-w-2xl mb-8">
                         <h1 class="text-5xl font-medium tracking-tight mb-4 leading-tight">
                             <span class="bg-gradient-to-r from-blue-400 via-purple-400 to-pink-500 bg-clip-text text-transparent font-bold">Hello, I'm Nexus</span>
                         </h1>
-                        <p id="welcome-model-subtitle" class="text-gray-400 text-lg">How can I help you today?</p>
+                        <p id="welcome-model-subtitle" class="text-gray-400 text-lg">Optimized low-RAM local workspace active.</p>
                     </div>
 
                     <!-- Idea Cards Grid -->
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full max-w-3xl px-4">
-                        <div onclick="fillAndSend('Explain the theory of relativity in one simple sentence.')" class="bg-[#1e1f20] hover:bg-[#2a2b2d] border border-[#303134] rounded-2xl p-5 cursor-pointer transition-all duration-200 group flex flex-col justify-between h-36">
+                        <div onclick="fillAndSend('Explain the theory of relativity in one simple sentence.')" class="bg-[#1e1f20] hover:bg-[#2a2b2d] border border-[#303134] rounded-2xl p-5 cursor-pointer transition-all duration-200 group flex flex-col justify-between h-32">
                             <p class="text-sm text-gray-300 leading-relaxed group-hover:text-white">Explain relativity in one simple sentence</p>
                             <div class="self-end p-2 bg-[#131314] rounded-full text-indigo-400 border border-[#303134]">
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" d="M12 18.75a6 6 0 0 0 6-6v-1.5m-6 7.5a6 6 0 0 1-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 0 1-3-3V4.5a3 3 0 1 1 6 0v8.25a3 3 0 0 1-3 3Z"/></svg>
                             </div>
                         </div>
-                        <div onclick="fillAndSend('Draft a highly concise pitch for a local web-browsing AI assistant.')" class="bg-[#1e1f20] hover:bg-[#2a2b2d] border border-[#303134] rounded-2xl p-5 cursor-pointer transition-all duration-200 group flex flex-col justify-between h-36">
+                        <div onclick="fillAndSend('Draft a highly concise pitch for a local web-browsing AI assistant.')" class="bg-[#1e1f20] hover:bg-[#2a2b2d] border border-[#303134] rounded-2xl p-5 cursor-pointer transition-all duration-200 group flex flex-col justify-between h-32">
                             <p class="text-sm text-gray-300 leading-relaxed group-hover:text-white">Write a quick elevator pitch for an offline AI app</p>
                             <div class="self-end p-2 bg-[#131314] rounded-full text-indigo-400 border border-[#303134]">
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" /></svg>
                             </div>
                         </div>
-                        <div onclick="fillAndSend('What is the fast inverse square root constant and its magic value?')" class="bg-[#1e1f20] hover:bg-[#2a2b2d] border border-[#303134] rounded-2xl p-5 cursor-pointer transition-all duration-200 group flex flex-col justify-between h-36">
+                        <div onclick="fillAndSend('What is the fast inverse square root constant and its magic value?')" class="bg-[#1e1f20] hover:bg-[#2a2b2d] border border-[#303134] rounded-2xl p-5 cursor-pointer transition-all duration-200 group flex flex-col justify-between h-32">
                             <p class="text-sm text-gray-300 leading-relaxed group-hover:text-white">Describe the fast inverse square root magic constant</p>
                             <div class="self-end p-2 bg-[#131314] rounded-full text-indigo-400 border border-[#303134]">
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" d="M17.25 6.75 22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3-4.5 16.5" /></svg>
                             </div>
                         </div>
-                        <div onclick="fillAndSend('Who was Alan Turing? Keep it to one short sentence.')" class="bg-[#1e1f20] hover:bg-[#2a2b2d] border border-[#303134] rounded-2xl p-5 cursor-pointer transition-all duration-200 group flex flex-col justify-between h-36">
+                        <div onclick="fillAndSend('Who was Alan Turing? Keep it to one short sentence.')" class="bg-[#1e1f20] hover:bg-[#2a2b2d] border border-[#303134] rounded-2xl p-5 cursor-pointer transition-all duration-200 group flex flex-col justify-between h-32">
                             <p class="text-sm text-gray-300 leading-relaxed group-hover:text-white">Who was Alan Turing? (Concise summary)</p>
                             <div class="self-end p-2 bg-[#131314] rounded-full text-indigo-400 border border-[#303134]">
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" /></svg>
@@ -229,7 +254,7 @@
                             <input 
                                 type="text" 
                                 id="user-input" 
-                                placeholder="Ask Nexus..." 
+                                placeholder="Engine loaded. Ask Nexus..." 
                                 class="flex-1 bg-transparent border-0 outline-none text-gray-100 py-3 text-[15px] placeholder-gray-500"
                                 autocomplete="off"
                                 disabled
@@ -244,7 +269,9 @@
                                 </svg>
                             </button>
                         </div>
-                        <span class="text-[10px] text-gray-500 text-center mt-2 tracking-wide">Nexus AI generates local, high-speed, private answers using WebGPU and Web Workers.</span>
+                        <span class="text-[10px] text-gray-500 text-center mt-2 tracking-wide">
+                            Optimizations active: Sliding Context Window (reduces memory consumption over long sessions).
+                        </span>
                     </div>
                 </div>
 
@@ -260,9 +287,12 @@
         const userInput = document.getElementById('user-input');
         const sendBtn = document.getElementById('send-btn');
         const loadingScreen = document.getElementById('loading-screen');
+        const choicePanel = document.getElementById('choice-panel');
+        const progressPanel = document.getElementById('progress-panel');
         const progressBar = document.getElementById('progress-bar');
         const progressText = document.getElementById('progress-text');
         const speedIndicator = document.getElementById('speed-indicator');
+        const activeModelSidebar = document.getElementById('active-model-sidebar');
 
         const sidebar = document.getElementById('sidebar');
         const sidebarOverlay = document.getElementById('sidebar-overlay');
@@ -270,16 +300,15 @@
         const closeSidebarBtn = document.getElementById('close-sidebar-btn');
         const newChatBtn = document.getElementById('new-chat-btn');
         const chatsListContainer = document.getElementById('chats-list-container');
-        const userIdDisplay = document.getElementById('user-id-display');
 
         // State Machine
         let isGenerating = false;
         let currentTypingBubble = null;
         let activeChatId = null; 
-        let selectedModelPath = 'onnx-community/Qwen2.5-0.5B-Instruct';
+        let selectedModelPath = 'onnx-community/smollm2-135m-instruct'; // Default fallback
 
-        // Base instructions
-        const SYSTEM_INSTRUCTIONS = "You are Nexus AI, a highly factual, extremely concise and straightforward assistant. Do NOT use emojis. Answer directly and cleanly. Keep responses short and avoid follow-up questions.";
+        // Factual, highly-curated instructions that minimize vocabulary usage (saves generation RAM)
+        const SYSTEM_INSTRUCTIONS = "You are Nexus AI, a factual assistant. Answer directly and cleanly. Keep responses short. No emojis.";
         
         let chatHistory = [
             { role: "system", content: SYSTEM_INSTRUCTIONS }
@@ -533,17 +562,20 @@
             // OPTIMIZATION 1: Strictly enforce 1 thread. Multi-threaded WASM triggers heavy allocation overhead on Chrome OS.
             env.backends.onnx.wasm.numThreads = 1;
 
-            // OPTIMIZATION 2: Restrict ONNX session engine's graph optimizer memory footprints.
-            // Bypasses optimization completely to prevent memory spikes on low-spec Chromebooks.
+            // OPTIMIZATION 2: Ensure WebAssembly SIMD is checked/active for raw processing throughput.
+            env.backends.onnx.wasm.simd = true;
+
+            // OPTIMIZATION 3: Tighten ONNX session engine's graph memory footprint.
+            // Bypasses graph rewriting to stop sudden RAM spikes on low-spec hardware.
             env.backends.onnx.session_options = {
-                graphOptimizationLevel: 'disabled', // Completely disables graph rewrite compilation to prevent crashing!
-                enableCpuMemArena: false,          // Prevent pre-allocating large memory buffer blocks
+                graphOptimizationLevel: 'disabled', // Completely disables graph rewrite compilation
+                enableCpuMemArena: false,          // Prevent pre-allocating large memory blocks
                 enableMemPattern: false,           // Disable memory pattern planning to keep heap size small
-                executionMode: 'sequential'        // Allocates memory step-by-step
+                executionMode: 'sequential'        // Allocates step-by-step
             };
 
             let aiPipeline = null;
-            let lastProgressSent = 0; // Throttle state
+            let lastProgressSent = 0;
 
             self.onmessage = async function(e) {
                 const { action, payload } = e.data;
@@ -551,15 +583,14 @@
                 if (action === 'load') {
                     try {
                         const deviceToUse = navigator.gpu ? 'webgpu' : 'wasm';
-                        const modelPath = payload?.model || 'onnx-community/Qwen2.5-0.5B-Instruct';
+                        const modelPath = payload?.model || 'onnx-community/smollm2-135m-instruct';
 
                         aiPipeline = await pipeline('text-generation', modelPath, {
                             device: deviceToUse,
-                            dtype: 'q4',
+                            dtype: 'q4', // Fast quantized models
                             progress_callback: (data) => {
                                 const now = Date.now();
-                                // OPTIMIZATION 3: Throttle progress reports to UI to prevent execution lag.
-                                if (now - lastProgressSent > 100 || data.status === 'done' || data.status === 'initiate') {
+                                if (now - lastProgressSent > 150 || data.status === 'done' || data.status === 'initiate') {
                                     self.postMessage({ action: 'progress', data });
                                     lastProgressSent = now;
                                 }
@@ -585,8 +616,9 @@
                             }
                         });
 
+                        // OPTIMIZATION 4: Keep max new tokens moderate (256 instead of 512) to reduce generation phase RAM.
                         const results = await aiPipeline(payload.chatHistory, {
-                            max_new_tokens: 512,
+                            max_new_tokens: 256,
                             do_sample: false, 
                             streamer: streamer
                         });
@@ -631,12 +663,12 @@
                     const isUltraLow = model.includes('smollm');
                     
                     if (isUltraLow) {
-                        speedIndicator.innerText = `Ultra-Low RAM Mode (SmolLM Model)`;
-                        document.getElementById('welcome-model-subtitle').innerText = "Running on ultra-low memory mode. Perfect for Chromebooks!";
+                        speedIndicator.innerText = `Ultra-Lite Engine (SmolLM2 135M)`;
+                        activeModelSidebar.innerText = "SmolLM2-135M (Lite)";
                         document.getElementById('header-brand').innerText = "Nexus AI (Lite)";
                     } else {
-                        speedIndicator.innerText = device === 'webgpu' ? 'WebGPU Accelerated 🚀' : 'CPU Computing Active (Safe Memory Mode)';
-                        document.getElementById('welcome-model-subtitle').innerText = "How can I help you today?";
+                        speedIndicator.innerText = device === 'webgpu' ? 'WebGPU Accelerated 🚀' : 'CPU Computing Active (Optimized)';
+                        activeModelSidebar.innerText = "Qwen2.5-0.5B (Standard)";
                         document.getElementById('header-brand').innerText = "Nexus AI";
                     }
 
@@ -686,19 +718,11 @@
                         currentTypingBubble.id = '';
                         currentTypingBubble.innerText = `Engine error: ${error}`;
                     } else {
-                        // Fallback handling chain
-                        if (selectedModelPath === 'onnx-community/smollm2-135m-instruct') {
-                            progressText.innerText = `SmolLM2 failed. Swapping to highly compatible SmolLM-135M...`;
-                            setTimeout(() => {
-                                switchToBackupLowMode();
-                            }, 2000);
-                        } else {
-                            progressText.innerText = `Initialization Error: ${error}. Trying to swap to safe mode...`;
-                            progressText.classList.add('text-red-400');
-                            setTimeout(() => {
-                                switchToUltraLowMode();
-                            }, 2000);
-                        }
+                        progressText.innerText = `Initialization Error: ${error}. Retrying Ultra-Lite Safe Mode...`;
+                        progressText.classList.add('text-red-400');
+                        setTimeout(() => {
+                            selectAndBoot('onnx-community/smollm2-135m-instruct');
+                        }, 2500);
                     }
                     currentTypingBubble = null;
                 }
@@ -707,37 +731,19 @@
 
         setupWorkerListener();
 
-        // Switch model to extreme lightweight SmolLM-135M-Instruct (Lowercase path)
-        window.switchToUltraLowMode = function() {
+        // Safe Select & Boot Function
+        window.selectAndBoot = function(modelPath) {
+            selectedModelPath = modelPath;
+            choicePanel.classList.add('hidden');
+            progressPanel.classList.remove('hidden');
             progressBar.style.width = `0%`;
-            progressText.innerText = `Swapping models to smollm2-135m (70MB Model)...`;
-            progressText.className = "text-xs font-mono text-amber-400 mb-6";
-            
-            // Terminate existing worker to free crashed browser memory
-            worker.terminate();
+            progressText.innerText = `Initializing worker background thread...`;
+            progressText.className = "text-xs font-mono text-indigo-400 mb-6";
 
-            // Spawn new worker
-            worker = new Worker(URL.createObjectURL(blob), { type: 'module' });
-            setupWorkerListener();
-
-            selectedModelPath = 'onnx-community/smollm2-135m-instruct'; // Correct lowercase path
             worker.postMessage({ action: 'load', payload: { model: selectedModelPath } });
         };
 
-        // Deep Backup Fallback Mode using SmolLM v1 if v2 is barred or blocked
-        function switchToBackupLowMode() {
-            progressBar.style.width = `0%`;
-            progressText.innerText = `Loading stable fallback smollm-135m...`;
-            
-            worker.terminate();
-            worker = new Worker(URL.createObjectURL(blob), { type: 'module' });
-            setupWorkerListener();
-
-            selectedModelPath = 'onnx-community/smollm-135m-instruct'; // Fallback path
-            worker.postMessage({ action: 'load', payload: { model: selectedModelPath } });
-        }
-
-        // Main input sending function
+        // Main input sending function with Sliding Context Window optimization
         function handleSend() {
             const text = userInput.value.trim();
             if (!text || isGenerating) return;
@@ -751,9 +757,22 @@
             currentTypingBubble = addMessage('', false, true);
             chatHistory.push({ role: "user", content: text });
 
+            // OPTIMIZATION 5: Sliding Context Window.
+            // Rather than feeding growing history into ONNX which crashes 2GB RAM devices,
+            // we slice to send ONLY the system prompt and the latest 4 messages.
+            const systemPrompt = chatHistory[0];
+            const interactiveHistory = chatHistory.slice(1);
+            
+            // Limit history sent to the worker to the last 4 turns
+            const maxContextTurns = 4;
+            const truncatedHistory = [
+                systemPrompt,
+                ...interactiveHistory.slice(-maxContextTurns)
+            ];
+
             worker.postMessage({ 
                 action: 'generate', 
-                payload: { chatHistory } 
+                payload: { chatHistory: truncatedHistory } 
             });
         }
 
@@ -762,9 +781,6 @@
         userInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') handleSend();
         });
-
-        // Trigger loading inside background worker with default Qwen
-        worker.postMessage({ action: 'load', payload: { model: selectedModelPath } });
     </script>
 </body>
 </html>
