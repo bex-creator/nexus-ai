@@ -4,9 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Nexus AI</title>
-    <script src="[https://cdn.tailwindcss.com](https://cdn.tailwindcss.com)"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @import url('[https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap](https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap)');
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
         
         body {
             font-family: 'Outfit', sans-serif;
@@ -81,18 +81,17 @@
 </head>
 <body class="text-gray-200 h-screen flex overflow-hidden antialiased">
 
-    <!-- Left Navigation Sidebar -->
     <aside id="sidebar" class="w-72 bg-[#1e1f20] border-r border-[#303134] flex flex-col z-20 sidebar-transition fixed md:static inset-y-0 left-0 transform -translate-x-full md:translate-x-0">
         <div class="h-16 flex items-center justify-between px-4 border-b border-[#303134] md:border-transparent">
             <button id="close-sidebar-btn" class="p-2 text-gray-400 hover:text-white rounded-full hover:bg-[#2a2b2d] md:hidden">
-                <svg xmlns="[http://www.w3.org/2000/svg](http://www.w3.org/2000/svg)" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
             </button>
             <span class="text-lg font-medium tracking-tight bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent font-bold">Nexus Menu</span>
         </div>
 
         <div class="px-3.5 py-4">
             <button id="new-chat-btn" class="w-full flex items-center gap-3 px-4 py-3 bg-[#131314] hover:bg-[#2a2b2d] border border-[#303134] rounded-full text-sm font-medium text-gray-300 hover:text-white transition-all">
-                <svg xmlns="[http://www.w3.org/2000/svg](http://www.w3.org/2000/svg)" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5 text-indigo-400"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5 text-indigo-400"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
                 <span>New chat</span>
             </button>
         </div>
@@ -115,12 +114,11 @@
 
     <div id="sidebar-overlay" class="fixed inset-0 bg-black/60 z-10 hidden md:hidden"></div>
 
-    <!-- Main Workspace -->
     <div class="flex-1 flex flex-col h-screen overflow-hidden relative">
         <header class="h-16 flex items-center justify-between px-4 md:px-6 z-10 bg-[#131314] border-b border-[#202124]">
             <div class="flex items-center gap-3">
                 <button id="menu-toggle-btn" class="p-2 text-gray-400 hover:text-white rounded-full hover:bg-[#2a2b2d]">
-                    <svg xmlns="[http://www.w3.org/2000/svg](http://www.w3.org/2000/svg)" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" /></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" /></svg>
                 </button>
                 <span id="header-brand" class="text-xl font-medium tracking-tight bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-500 bg-clip-text text-transparent font-semibold">Nexus AI</span>
             </div>
@@ -131,12 +129,11 @@
         </header>
 
         <main class="flex-1 relative overflow-hidden flex flex-col items-center">
-            <!-- Loading Overlay -->
             <div id="loading-screen" class="absolute inset-0 bg-[#0f1114] z-30 flex flex-col items-center justify-center p-6 transition-all duration-700">
                 <div class="max-w-md w-full text-center">
                     <div class="w-16 h-16 mx-auto mb-8 text-indigo-400 status-glow">
-                        <svg xmlns="[http://www.w3.org/2000/svg](http://www.w3.org/2000/svg)" viewBox="0 0 24 24" fill="currentColor" class="w-full h-full">
-                            <path d="M11.645 20.91l-.007-.003-.003-.001a1.99 1.99 0 01-.194-.124c-.201-.15-.46-.395-.717-.745-.515-.7-1.002-1.748-1.344-3.085a11.91 11.91 0 01-.334-1.745l-.014-.114-.114-.014a11.91 11.91 0 01-1.745-.334c-1.337-.342-2.385-.829-3.085-1.344-.35-.257-.594-.516-.745-.717a1.99 1.99 0 01-.125-.194L3.1 12.35l.001-.003.003-.007a2.078 2.078 0 01.353-.45c.29-.272.71-.588 1.258-.92 1.096-.665 2.585-1.348 4.298-1.638l.142-.024.024-.142c.29-1.713.973-3.202 1.638-4.298.332-.548.648-.967.92-1.258a2.078 2.078 0 01.453-.353l.006-.003.004-.001a1.99 1.99 0 01.194.124c.201.15.46.395.717.745.515.7 1.002 1.748 1.344 3.085.122.48.234.962.334 1.745l.014.114.114.014c.783.1 1.265.212 1.745.334 1.337.342 2.385.829 3.085 1.344.35.257.594.516.745.717.043.058.086.124.125.194l.007.003.003.001a2.078 2.078 0 01-.353.45c-.29.272-.71.588-1.258.92-1.096.665-2.585 1.348-4.298 1.638l-.142.024-.024.142c-.29 1.713-.973 3.202-1.638 4.298-.332.548-.648.967-.92 1.258a2.078 2.078 0 01-.453.353z" />
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-full h-full">
+                            <path d="M11.645 20.91l-.007-.003-.003-.001a1.99 1.99 0 01-.194-.124c-.201-.15-.46-.395-.717-.745-.515-.7-1.002-1.748-1.344-3.085a11.91 11.91 0 01-.334-1.745l-.014-.114-.114-.014a11.91 11.91 0 01-1.745-.334c-1.337-.342-2.385-.829-3.085-1.344-.35-.257-.594-.516-.745-.717a1.99 1.99 0 01-.125-.194L3.1 12.35l.001-.003.003-.007a2.078 2.078 0 01.353-.45c.29-.272.71-.588(http://www.w3.org/2000/svg) .258-.92 1.096-.665 2.585-1.348 4.298-1.638l.142-.024.024-.142c.29-1.713.973-3.202 1.638-4.298.332-.548.648-.967.92-1.258a2.078 2.078 0 01.453-.353l.006-.003.004-.001a1.99 1.99 0 01.194.124c.201.15.46.395.717.745.515.7 1.002 1.748 1.344 3.085.122.48.234.962.334 1.745l.014.114.114.014c.783.1 1.265.212 1.745.334 1.337.342 2.385.829 3.085 1.344.35.257.594.516.745.717.043.058.086.124.125.194l.007.003.003.001a2.078 2.078 0 01-.353.45c-.29.272-.71.588-1.258.92-1.096.665-2.585 1.348-4.298 1.638l-.142.024-.024.142c-.29 1.713-.973 3.202-1.638 4.298-.332.548-.648.967-.92 1.258a2.078 2.078 0 01-.453.353z" />
                         </svg>
                     </div>
                     <h2 class="text-3xl font-medium tracking-tight mb-3">Initializing Nexus Engine</h2>
@@ -157,7 +154,6 @@
                 </div>
             </div>
 
-            <!-- Chat Frame -->
             <div id="chat-frame" class="w-full max-w-4xl flex-1 flex flex-col justify-between overflow-hidden relative px-4 md:px-6">
                 <div id="welcome-container" class="flex-1 flex flex-col justify-center items-center py-12 select-none overflow-y-auto">
                     <div class="text-center max-w-2xl mb-12">
@@ -171,25 +167,25 @@
                         <div onclick="fillAndSend('Explain the theory of relativity in one simple sentence.')" class="bg-[#1e1f20] hover:bg-[#2a2b2d] border border-[#303134] rounded-2xl p-5 cursor-pointer transition-all duration-200 group flex flex-col justify-between h-36">
                             <p class="text-sm text-gray-300 leading-relaxed group-hover:text-white">Explain relativity in one simple sentence</p>
                             <div class="self-end p-2 bg-[#131314] rounded-full text-indigo-400 border border-[#303134]">
-                                <svg xmlns="[http://www.w3.org/2000/svg](http://www.w3.org/2000/svg)" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" d="M12 18.75a6 6 0 0 0 6-6v-1.5m-6 7.5a6 6 0 0 1-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 0 1-3-3V4.5a3 3 0 1 1 6 0v8.25a3 3 0 0 1-3 3Z"/></svg>
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" d="M12 18.75a6 6 0 0 0 6-6v-1.5m-6 7.5a6 6 0 0 1-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 0 1-3-3V4.5a3 3 0 1 1 6 0v8.25a3 3 0 0 1-3 3Z"/></svg>
                             </div>
                         </div>
                         <div onclick="fillAndSend('Draft a highly concise pitch for a local web-browsing AI assistant.')" class="bg-[#1e1f20] hover:bg-[#2a2b2d] border border-[#303134] rounded-2xl p-5 cursor-pointer transition-all duration-200 group flex flex-col justify-between h-36">
                             <p class="text-sm text-gray-300 leading-relaxed group-hover:text-white">Write a quick elevator pitch for an offline AI app</p>
                             <div class="self-end p-2 bg-[#131314] rounded-full text-indigo-400 border border-[#303134]">
-                                <svg xmlns="[http://www.w3.org/2000/svg](http://www.w3.org/2000/svg)" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" /></svg>
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" /></svg>
                             </div>
                         </div>
                         <div onclick="fillAndSend('What is the fast inverse square root constant and its magic value?')" class="bg-[#1e1f20] hover:bg-[#2a2b2d] border border-[#303134] rounded-2xl p-5 cursor-pointer transition-all duration-200 group flex flex-col justify-between h-36">
                             <p class="text-sm text-gray-300 leading-relaxed group-hover:text-white">Describe the fast inverse square root magic constant</p>
                             <div class="self-end p-2 bg-[#131314] rounded-full text-indigo-400 border border-[#303134]">
-                                <svg xmlns="[http://www.w3.org/2000/svg](http://www.w3.org/2000/svg)" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" d="M17.25 6.75 22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3-4.5 16.5" /></svg>
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" d="M17.25 6.75 22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3-4.5 16.5" /></svg>
                             </div>
                         </div>
                         <div onclick="fillAndSend('Who was Alan Turing? Keep it to one short sentence.')" class="bg-[#1e1f20] hover:bg-[#2a2b2d] border border-[#303134] rounded-2xl p-5 cursor-pointer transition-all duration-200 group flex flex-col justify-between h-36">
                             <p class="text-sm text-gray-300 leading-relaxed group-hover:text-white">Who was Alan Turing? (Concise summary)</p>
                             <div class="self-end p-2 bg-[#131314] rounded-full text-indigo-400 border border-[#303134]">
-                                <svg xmlns="[http://www.w3.org/2000/svg](http://www.w3.org/2000/svg)" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" /></svg>
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" /></svg>
                             </div>
                         </div>
                     </div>
@@ -202,7 +198,7 @@
                         <div class="flex items-center bg-[#1e1f20] rounded-full px-6 py-2 border border-[#303134] shadow-2xl focus-within:border-gray-500 transition-all">
                             <input type="text" id="user-input" placeholder="Ask Nexus..." class="flex-1 bg-transparent border-0 outline-none text-gray-100 py-3 text-[15px] placeholder-gray-500" autocomplete="off" disabled>
                             <button id="send-btn" class="p-2.5 text-indigo-400 hover:text-white disabled:opacity-30 disabled:hover:text-indigo-400 transition-colors rounded-full hover:bg-[#2a2b2d]" disabled>
-                                <svg xmlns="[http://www.w3.org/2000/svg](http://www.w3.org/2000/svg)" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5">
                                     <path d="M3.478 2.405a.75.75 0 00-.926.94l2.432 7.905H13.5a.75.75 0 010 1.5H4.984l-2.432 7.905a.75.75 0 00.926.94 60.519 60.519 0 0018.445-8.986.75.75 0 000-1.218A60.517 60.517 0 003.478 2.405z" />
                                 </svg>
                             </button>
@@ -384,11 +380,11 @@
                     pill.addEventListener('click', () => selectChat(chat.id));
                     pill.innerHTML = `
                         <div class="flex items-center gap-2.5 min-w-0 flex-1">
-                            <svg xmlns="[http://www.w3.org/2000/svg](http://www.w3.org/2000/svg)" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4 text-gray-500 group-hover:text-indigo-400 transition-colors shrink-0"><path stroke-linecap="round" stroke-linejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 0 1 .865-.501 48.172 48.172 0 0 0 3.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0 0 12 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018Z" /></svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4 text-gray-500 group-hover:text-indigo-400 transition-colors shrink-0"><path stroke-linecap="round" stroke-linejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 0 1 .865-.501 48.172 48.172 0 0 0 3.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0 0 12 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018Z" /></svg>
                             <span class="truncate pr-2">${chat.title}</span>
                         </div>
                         <button class="opacity-0 group-hover:opacity-100 p-1 text-gray-500 hover:text-red-400 hover:bg-[#131314] rounded transition-all shrink-0" title="Delete chat">
-                            <svg xmlns="[http://www.w3.org/2000/svg](http://www.w3.org/2000/svg)" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-3.5 h-3.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-3.5 h-3.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
                         </button>
                     `;
                     pill.querySelector('button').addEventListener('click', (e) => deleteChatFromLocalDB(chat.id, e));
@@ -421,7 +417,7 @@
                 wrapper.innerHTML = `
                     <div class="flex items-start gap-3 w-full">
                         <div class="w-7 h-7 rounded-full bg-gradient-to-tr from-blue-500 to-indigo-600 flex items-center justify-center flex-shrink-0 shadow-lg mt-0.5">
-                            <svg xmlns="[http://www.w3.org/2000/svg](http://www.w3.org/2000/svg)" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4 text-white">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4 text-white">
                                 <path d="M11.645 20.91l-.007-.003-.003-.001a1.99 1.99 0 01-.194-.124c-.201-.15-.46-.395-.717-.745-.515-.7-1.002-1.748-1.344-3.085a11.91 11.91 0 01-.334-1.745l-.014-.114-.114-.014a11.91 11.91 0 01-1.745-.334c-1.337-.342-2.385-.829-3.085-1.344-.35-.257-.594-.516-.745-.717a1.99 1.99 0 01-.125-.194L3.1 12.35l.001-.003.003-.007a2.078 2.078 0 01.353-.45c.29-.272.71-.588 1.258-.92 1.096-.665 2.585-1.348 4.298-1.638l.142-.024.024-.142c.29-1.713.973-3.202 1.638-4.298.332-.548.648-.967.92-1.258a2.078 2.078 0 01.453-.353l.006-.003.004-.001a1.99 1.99 0 01.194.124c.201.15.46.395.717.745.515.7 1.002 1.748 1.344 3.085.122.48.234.962.334 1.745l.014.114.114.014c.783.1 1.265.212 1.745.334 1.337.342 2.385.829 3.085 1.344.35.257.594.516.745.717.043.058.086.124.125.194l.007.003.003.001a2.078 2.078 0 01-.353.45c-.29.272-.71.588-1.258.92-1.096.665-2.585 1.348-4.298 1.638l-.142.024-.024.142c-.29 1.713-.973 3.202-1.638 4.298-.332.548-.648.967-.92 1.258a2.078 2.078 0 01-.453.353z" />
                             </svg>
                         </div>
@@ -436,12 +432,11 @@
             return wrapper.querySelector(isUser ? '.bg-\\[\\#2a2b2d\\]' : '.flex-1');
         }
 
-        // OPTIMIZATION: Created from a real, persistent server path rather than inline blob!
         let worker = new Worker('worker.js');
 
         function setupWorkerListener() {
             worker.onmessage = function(e) {
-                const { action, data, token, answer, error, device, model } = e.data;
+                const { action, data, token, error, device, model } = e.data;
 
                 if (action === 'progress') {
                     if (data.status === 'initiate') {
@@ -456,7 +451,7 @@
                 }
 
                 else if (action === 'ready') {
-                    const isUltraLow = model.includes('smollm');
+                    const isUltraLow = model && model.includes('smollm');
                     if (isUltraLow) {
                         speedIndicator.innerText = `Ultra-Low RAM Mode (SmolLM Model)`;
                         document.getElementById('welcome-model-subtitle').innerText = "Running on ultra-low memory mode. Perfect for Chromebooks!";
@@ -493,89 +488,70 @@
                     if (currentTypingBubble) {
                         if (currentTypingBubble.id === 'typing-indicator') {
                             currentTypingBubble.id = '';
-                            currentTypingBubble.innerText = answer;
                         }
                         chatHistory.push({ role: "assistant", content: currentTypingBubble.innerText });
                         saveChatToLocalDB();
+                        currentTypingBubble = null;
                     }
-                    currentTypingBubble = null;
                 }
 
                 else if (action === 'error') {
                     isGenerating = false;
                     sendBtn.disabled = false;
                     userInput.disabled = false;
-
                     if (currentTypingBubble) {
-                        currentTypingBubble.id = '';
-                        currentTypingBubble.innerText = `Engine error: ${error}`;
+                        currentTypingBubble.innerText = "Error: " + error;
+                        currentTypingBubble = null;
                     } else {
-                        if (selectedModelPath === 'onnx-community/smollm2-135m-instruct') {
-                            progressText.innerText = `SmolLM2 failed. Swapping to highly compatible SmolLM-135M...`;
-                            setTimeout(() => switchToBackupLowMode(), 2000);
-                        } else {
-                            progressText.innerText = `Initialization Error: ${error}. Trying to swap to safe mode...`;
-                            progressText.classList.add('text-red-400');
-                            setTimeout(() => switchToUltraLowMode(), 2000);
-                        }
+                        addMessage("An error occurred: " + error, false);
                     }
-                    currentTypingBubble = null;
                 }
             };
-        }
-
-        setupWorkerListener();
-
-        window.switchToUltraLowMode = function() {
-            progressBar.style.width = `0%`;
-            progressText.innerText = `Swapping models to smollm2-135m (70MB Model)...`;
-            progressText.className = "text-xs font-mono text-amber-400 mb-6";
-            
-            worker.terminate();
-            worker = new Worker('worker.js');
-            setupWorkerListener();
-
-            selectedModelPath = 'onnx-community/smollm2-135m-instruct'; 
-            worker.postMessage({ action: 'load', payload: { model: selectedModelPath } });
-        };
-
-        function switchToBackupLowMode() {
-            progressBar.style.width = `0%`;
-            progressText.innerText = `Loading stable fallback smollm-135m...`;
-            
-            worker.terminate();
-            worker = new Worker('worker.js');
-            setupWorkerListener();
-
-            selectedModelPath = 'onnx-community/smollm-135m-instruct'; 
-            worker.postMessage({ action: 'load', payload: { model: selectedModelPath } });
         }
 
         function handleSend() {
             const text = userInput.value.trim();
             if (!text || isGenerating) return;
 
-            userInput.value = '';
-            addMessage(text, true);
             isGenerating = true;
             sendBtn.disabled = true;
             userInput.disabled = true;
-            
-            currentTypingBubble = addMessage('', false, true);
-            chatHistory.push({ role: "user", content: text });
+            userInput.value = '';
 
-            worker.postMessage({ 
-                action: 'generate', 
-                payload: { chatHistory } 
-            });
+            addMessage(text, true);
+            chatHistory.push({ role: "user", content: text });
+            saveChatToLocalDB();
+
+            currentTypingBubble = addMessage('', false, true);
+            worker.postMessage({ action: 'generate', history: chatHistory });
         }
 
         sendBtn.addEventListener('click', handleSend);
-        userInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') handleSend();
+        userInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                handleSend();
+            }
         });
 
-        worker.postMessage({ action: 'load', payload: { model: selectedModelPath } });
+        window.switchToUltraLowMode = function() {
+            selectedModelPath = 'onnx-community/SmolLM2-135M-Instruct';
+            progressBar.style.width = '0%';
+            progressText.innerText = 'Switching to ultra-low RAM mode...';
+            loadingScreen.style.opacity = '1';
+            loadingScreen.style.display = 'flex';
+            
+            userInput.disabled = true;
+            sendBtn.disabled = true;
+
+            worker.terminate();
+            worker = new Worker('worker.js');
+            setupWorkerListener();
+            worker.postMessage({ action: 'init', model: selectedModelPath });
+        };
+
+        // Initialize Web Worker setup on initialization
+        setupWorkerListener();
+        worker.postMessage({ action: 'init', model: selectedModelPath });
     </script>
 </body>
 </html>
