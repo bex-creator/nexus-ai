@@ -1,16 +1,19 @@
-// Classic web-worker loading script - Fixed CDN URL
+// Classic web-worker loading script
 importScripts('https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.0.0/dist/transformers.js');
 
 const { pipeline, env, TextStreamer } = self.transformers;
 
+// 1. BYPASS SCHOOL FIREWALLS
+// Forces the engine to use a mirror instead of huggingface.co
 env.allowLocalModels = false;
+env.remoteHost = 'https://hf-mirror.com'; 
 
 // Optimize CPU threading profile for Chromebooks
 env.backends.onnx.wasm.numThreads = 1;
 
 // Fully bypass complex optimizations to prevent memory-related crashes
 env.backends.onnx.session_options = {
-    graphOptimizationLevel: 'none', // Fixed: Changed 'disabled' to 'none'
+    graphOptimizationLevel: 'none', 
     enableCpuMemArena: false,       
     enableMemPattern: false,        
     executionMode: 'sequential'     
@@ -24,8 +27,9 @@ self.onmessage = async function(e) {
 
     if (action === 'load') {
         try {
-            // Safely check for WebGPU availability in the worker context
             const deviceToUse = (typeof navigator !== 'undefined' && navigator.gpu) ? 'webgpu' : 'wasm';
+            
+            // Default to Qwen, but allow the main script to pass a ultra-low RAM model
             const modelPath = payload?.model || 'onnx-community/Qwen2.5-0.5B-Instruct';
 
             aiPipeline = await pipeline('text-generation', modelPath, {
@@ -33,7 +37,6 @@ self.onmessage = async function(e) {
                 dtype: 'q4',
                 progress_callback: (data) => {
                     const now = Date.now();
-                    // Throttle updates to prevent Chromium main-thread blocking
                     if (now - lastProgressSent > 100 || data.status === 'done' || data.status === 'initiate') {
                         self.postMessage({ action: 'progress', data });
                         lastProgressSent = now;
