@@ -133,7 +133,7 @@
                 <div class="max-w-md w-full text-center">
                     <div class="w-16 h-16 mx-auto mb-8 text-indigo-400 status-glow">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-full h-full">
-                            <path d="M11.645 20.91l-.007-.003-.003-.001a1.99 1.99 0 01-.194-.124c-.201-.15-.46-.395-.717-.745-.515-.7-1.002-1.748-1.344-3.085a11.91 11.91 0 01-.334-1.745l-.014-.114-.114-.014a11.91 11.91 0 01-1.745-.334c-1.337-.342-2.385-.829-3.085-1.344-.35-.257-.594-.516-.745-.717a1.99 1.99 0 01-.125-.194L3.1 12.35l.001-.003.003-.007a2.078 2.078 0 01.353-.45c.29-.272.71-.588(http://www.w3.org/2000/svg) .258-.92 1.096-.665 2.585-1.348 4.298-1.638l.142-.024.024-.142c.29-1.713.973-3.202 1.638-4.298.332-.548.648-.967.92-1.258a2.078 2.078 0 01.453-.353l.006-.003.004-.001a1.99 1.99 0 01.194.124c.201.15.46.395.717.745.515.7 1.002 1.748 1.344 3.085.122.48.234.962.334 1.745l.014.114.114.014c.783.1 1.265.212 1.745.334 1.337.342 2.385.829 3.085 1.344.35.257.594.516.745.717.043.058.086.124.125.194l.007.003.003.001a2.078 2.078 0 01-.353.45c-.29.272-.71.588-1.258.92-1.096.665-2.585 1.348-4.298 1.638l-.142.024-.024.142c-.29 1.713-.973 3.202-1.638 4.298-.332.548-.648.967-.92 1.258a2.078 2.078 0 01-.453.353z" />
+                            <path d="M11.645 20.91l-.007-.003-.003-.001a1.99 1.99 0 01-.194-.124c-.201-.15-.46-.395-.717-.745-.515-.7-1.002-1.748-1.344-3.085a11.91 11.91 0 01-.334-1.745l-.014-.114-.114-.014a11.91 11.91 0 01-1.745-.334c-1.337-.342-2.385-.829-3.085-1.344-.35-.257-.594-.516-.745-.717a1.99 1.99 0 01-.125-.194L3.1 12.35l.001-.003.003-.007a2.078 2.078 0 01.353-.45c.29-.272.71-.588 1.258-.92 1.096-.665 2.585-1.348 4.298-1.638l.142-.024.024-.142c.29-1.713.973-3.202 1.638-4.298.332-.548.648-.967.92-1.258a2.078 2.078 0 01.453-.353l.006-.003.004-.001a1.99 1.99 0 01.194.124c.201.15.46.395.717.745.515.7 1.002 1.748 1.344 3.085.122.48.234.962.334 1.745l.014.114.114.014c.783.1 1.265.212 1.745.334 1.337.342 2.385.829 3.085 1.344.35.257.594.516.745.717.043.058.086.124.125.194l.007.003.003.001a2.078 2.078 0 01-.353.45c-.29.272-.71.588-1.258.92-1.096.665-2.585 1.348-4.298 1.638l-.142.024-.024.142c-.29 1.713-.973 3.202-1.638 4.298-.332.548-.648.967-.92 1.258a2.078 2.078 0 01-.453.353z" />
                         </svg>
                     </div>
                     <h2 class="text-3xl font-medium tracking-tight mb-3">Initializing Nexus Engine</h2>
@@ -451,13 +451,13 @@
                 }
 
                 else if (action === 'ready') {
-                    const isUltraLow = model && model.includes('smollm');
+                    const isUltraLow = model && model.includes('SmolLM');
                     if (isUltraLow) {
-                        speedIndicator.innerText = `Ultra-Low RAM Mode (SmolLM Model)`;
+                        speedIndicator.innerText = `Ultra-Low RAM Mode (SmolLM-135M)`;
                         document.getElementById('welcome-model-subtitle').innerText = "Running on ultra-low memory mode. Perfect for Chromebooks!";
                         document.getElementById('header-brand').innerText = "Nexus AI (Lite)";
                     } else {
-                        speedIndicator.innerText = device === 'webgpu' ? 'WebGPU Accelerated 🚀' : 'CPU Computing Active (Safe Memory Mode)';
+                        speedIndicator.innerText = device === 'webgpu' ? 'WebGPU Accelerated' : 'CPU Computing Active (Safe Memory Mode)';
                         document.getElementById('welcome-model-subtitle').innerText = "How can I help you today?";
                         document.getElementById('header-brand').innerText = "Nexus AI";
                     }
@@ -484,74 +484,85 @@
                     sendBtn.disabled = false;
                     userInput.disabled = false;
                     userInput.focus();
-
-                    if (currentTypingBubble) {
-                        if (currentTypingBubble.id === 'typing-indicator') {
-                            currentTypingBubble.id = '';
-                        }
-                        chatHistory.push({ role: "assistant", content: currentTypingBubble.innerText });
-                        saveChatToLocalDB();
-                        currentTypingBubble = null;
-                    }
+                    saveChatToLocalDB();
                 }
-
+                
                 else if (action === 'error') {
                     isGenerating = false;
                     sendBtn.disabled = false;
                     userInput.disabled = false;
-                    if (currentTypingBubble) {
-                        currentTypingBubble.innerText = "Error: " + error;
-                        currentTypingBubble = null;
-                    } else {
-                        addMessage("An error occurred: " + error, false);
-                    }
+                    progressText.innerText = "Execution failed.";
+                    alert(`Engine Error: ${error || 'Device Memory Limit Reached'}. Switching to Ultra-Low RAM Mode recommended.`);
                 }
             };
         }
 
+        setupWorkerListener();
+
+        // Chromebook Optimized Messaging Handler
         function handleSend() {
             const text = userInput.value.trim();
             if (!text || isGenerating) return;
 
             isGenerating = true;
+            userInput.value = '';
             sendBtn.disabled = true;
             userInput.disabled = true;
-            userInput.value = '';
 
+            // Chromebook optimization: Hard cap the context memory size to prevent OOM tab crashes
+            if (chatHistory.length > 7) {
+                chatHistory = [
+                    chatHistory[0], // Keep system prompt
+                    ...chatHistory.slice(-6) // Retain only the last 3 turns of dialogue
+                ];
+            }
+
+            chatHistory.push({ role: 'user', content: text });
             addMessage(text, true);
-            chatHistory.push({ role: "user", content: text });
-            saveChatToLocalDB();
 
-            currentTypingBubble = addMessage('', false, true);
-            worker.postMessage({ action: 'generate', history: chatHistory });
+            // Add typewriter block element 
+            const containerNode = addMessage('', false, true);
+            currentTypingBubble = containerNode.querySelector('.flex-1') || containerNode;
+
+            worker.postMessage({
+                action: 'generate',
+                history: chatHistory
+            });
         }
 
         sendBtn.addEventListener('click', handleSend);
         userInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                handleSend();
-            }
+            if (e.key === 'Enter') handleSend();
         });
 
+        // Safe Memory Fallback Initialization
         window.switchToUltraLowMode = function() {
-            selectedModelPath = 'onnx-community/SmolLM2-135M-Instruct';
-            progressBar.style.width = '0%';
-            progressText.innerText = 'Switching to ultra-low RAM mode...';
+            progressText.innerText = "Purging memory & switching to 135M parameters...";
+            progressBar.style.width = "0%";
             loadingScreen.style.opacity = '1';
             loadingScreen.style.display = 'flex';
             
             userInput.disabled = true;
             sendBtn.disabled = true;
 
+            // Completely recycle the worker thread to release stale GPU/system allocations
             worker.terminate();
             worker = new Worker('worker.js');
             setupWorkerListener();
-            worker.postMessage({ action: 'init', model: selectedModelPath });
+
+            selectedModelPath = 'onnx-community/SmolLM-135M-Instruct';
+            worker.postMessage({
+                action: 'init',
+                model: selectedModelPath,
+                forceCPU: true // Force CPU computing since Chromebook WebGPU drivers frequently hit VRAM panics
+            });
         };
 
-        // Initialize Web Worker setup on initialization
-        setupWorkerListener();
-        worker.postMessage({ action: 'init', model: selectedModelPath });
+        // Kickoff initial baseline engine sequence
+        worker.postMessage({
+            action: 'init',
+            model: selectedModelPath
+        });
     </script>
 </body>
 </html>
