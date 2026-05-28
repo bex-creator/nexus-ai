@@ -122,11 +122,15 @@
       background-size: 200% auto;
       animation: textShine 2s linear infinite;
     }
+    
+    .spin-slow {
+        animation: spin 3s linear infinite;
+    }
   </style>
 </head>
 <body class="bg-gemini-lightBg dark:bg-gemini-darkBg text-slate-800 dark:text-zinc-200 transition-colors duration-300 h-screen h-[100dvh] flex font-sans selection:bg-indigo-500/30 overflow-hidden relative">
 
-  <div id="chat-container" class="flex flex-col flex-1 w-full h-full min-w-0 transition-all duration-300">
+  <div id="chat-container" class="flex flex-col flex-1 w-full h-full min-w-0 transition-all duration-300 relative">
     <!-- Header -->
     <header class="flex-none bg-transparent p-4 sm:px-6 z-10 flex items-center justify-between">
       <div class="flex items-center gap-2.5">
@@ -153,6 +157,18 @@
           </select>
           <i class="ph ph-caret-down text-[10px] absolute right-3 text-slate-500 pointer-events-none"></i>
         </div>
+        <!-- Personality Dropdown -->
+        <div class="relative hidden sm:flex items-center">
+          <select id="ai-personality-selector" class="appearance-none pr-8 pl-4 py-1.5 rounded-full bg-slate-200/40 dark:bg-zinc-800/60 text-xs text-slate-600 dark:text-zinc-400 font-medium outline-none cursor-pointer hover:bg-slate-200/80 dark:hover:bg-zinc-700/60 transition-colors">
+            <option value="default">Default Personality</option>
+            <option value="sassy">Sassy & Rude</option>
+            <option value="pirate">Pirate</option>
+            <option value="funny">Comedian</option>
+            <option value="shakespeare">Shakespearean</option>
+            <option value="uwu">UwU Mode</option>
+          </select>
+          <i class="ph ph-caret-down text-[10px] absolute right-3 text-slate-500 pointer-events-none"></i>
+        </div>
         <!-- Theme Switcher -->
         <button id="theme-toggle" class="p-2.5 rounded-full hover:bg-slate-200/50 dark:hover:bg-zinc-800/50 transition-colors text-slate-600 dark:text-zinc-300">
           <i class="ph-bold ph-moon text-lg dark:hidden"></i>
@@ -163,7 +179,7 @@
 
     <!-- Main Chat Container -->
     <main class="flex-1 overflow-hidden flex flex-col relative w-full max-w-4xl mx-auto px-4 sm:px-6">
-      <div id="chat-scroller" class="w-full flex-1 overflow-y-auto custom-scrollbar pb-6 pr-1">
+      <div id="chat-scroller" class="w-full flex-1 overflow-y-auto custom-scrollbar pb-32 pr-1">
         <div id="chat-history" class="space-y-8 py-6">
           
           <!-- INITIAL EMPTY STATE -->
@@ -177,11 +193,11 @@
 
             <!-- Suggestion Cards Grid -->
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full">
-              <div data-click="fillSuggestion" data-arg="Help me write a professional email requesting project extension" class="group p-5 rounded-2xl bg-white hover:bg-slate-100 dark:bg-gemini-darkCard dark:hover:bg-zinc-800/80 border border-slate-200/60 dark:border-zinc-800 cursor-pointer shadow-sm hover:shadow transition-all">
-                <p class="text-sm font-medium mb-4 text-slate-700 dark:text-zinc-300">Help me draft an email requesting an extension...</p>
+              <div data-click="fillSuggestion" data-arg="Play some lo-fi hip hop to help me focus" class="group p-5 rounded-2xl bg-white hover:bg-slate-100 dark:bg-gemini-darkCard dark:hover:bg-zinc-800/80 border border-slate-200/60 dark:border-zinc-800 cursor-pointer shadow-sm hover:shadow transition-all">
+                <p class="text-sm font-medium mb-4 text-slate-700 dark:text-zinc-300">Play some lo-fi hip hop music to help me focus...</p>
                 <div class="flex justify-end">
-                  <div class="w-8 h-8 rounded-full bg-slate-100 dark:bg-zinc-700/50 group-hover:bg-indigo-100 dark:group-hover:bg-indigo-900/30 flex items-center justify-center transition-colors">
-                    <i class="ph ph-pencil-line text-slate-500 dark:text-zinc-400 group-hover:text-indigo-500"></i>
+                  <div class="w-8 h-8 rounded-full bg-slate-100 dark:bg-zinc-700/50 group-hover:bg-pink-100 dark:group-hover:bg-pink-900/30 flex items-center justify-center transition-colors">
+                    <i class="ph ph-music-notes text-slate-500 dark:text-zinc-400 group-hover:text-pink-500"></i>
                   </div>
                 </div>
               </div>
@@ -218,8 +234,24 @@
       </div>
     </main>
 
+    <!-- Nexus Music Floating Widget -->
+    <div id="nexus-music-widget" class="absolute bottom-24 left-4 sm:left-6 z-40 bg-white/90 dark:bg-zinc-800/90 backdrop-blur-md border border-slate-200 dark:border-zinc-700 rounded-[2rem] p-3 shadow-xl hidden items-center gap-3 w-[280px] animate-fade-in transition-all hover:scale-[1.02]">
+        <div id="music-disc" class="w-12 h-12 rounded-full bg-gradient-to-tr from-[#d96570] to-[#9b72cb] flex items-center justify-center text-white shadow-md flex-shrink-0">
+            <i class="ph-fill ph-music-notes text-xl"></i>
+        </div>
+        <div class="flex-1 min-w-0">
+            <p class="text-[10px] font-bold text-slate-400 dark:text-zinc-400 uppercase tracking-widest leading-none mb-1">Nexus Music</p>
+            <p id="music-title" class="text-sm font-bold text-slate-800 dark:text-zinc-100 truncate">Not Playing</p>
+        </div>
+        <button data-click="toggleMusic" class="w-10 h-10 rounded-full bg-slate-100 dark:bg-zinc-700 flex items-center justify-center text-slate-600 dark:text-zinc-300 hover:bg-slate-200 dark:hover:bg-zinc-600 transition-colors flex-shrink-0">
+            <i id="music-play-icon" class="ph-fill ph-pause text-xl"></i>
+        </button>
+        <!-- Invisible YouTube Player Container -->
+        <div id="yt-player-container" class="hidden"></div>
+    </div>
+
     <!-- Input Container -->
-    <footer class="flex-none pb-6 pt-2 px-4 sm:px-6 w-full max-w-4xl mx-auto flex justify-center">
+    <footer class="flex-none pb-6 pt-2 px-4 sm:px-6 w-full max-w-4xl mx-auto flex justify-center z-50">
       <div class="w-full relative">
         <form id="chat-form" class="relative flex flex-col justify-center bg-white dark:bg-gemini-darkCard border border-slate-200/80 dark:border-zinc-800 rounded-3xl shadow-[0_4px_30px_rgba(0,0,0,0.04)] dark:shadow-[0_12px_40px_rgba(0,0,0,0.3)] transition-all overflow-hidden focus-within:ring-2 focus-within:ring-indigo-500/20 focus-within:border-slate-300 dark:focus-within:border-zinc-700">
           
@@ -239,7 +271,7 @@
             </button>
             <input type="file" id="file-upload-input" accept="image/*" class="hidden">
 
-            <input type="text" id="chat-input" placeholder="Ask Nexus AI..." autocomplete="off" class="flex-1 bg-transparent py-3 sm:py-4 px-2 sm:px-3 text-base text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-zinc-500 outline-none w-full min-w-0">
+            <input type="text" id="chat-input" placeholder="Ask Nexus AI... (or type 'play lo-fi')" autocomplete="off" class="flex-1 bg-transparent py-3 sm:py-4 px-2 sm:px-3 text-base text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-zinc-500 outline-none w-full min-w-0">
             
             <button type="submit" id="chat-submit" class="flex-none bg-slate-100 hover:bg-slate-200 text-slate-400 hover:text-slate-900 dark:bg-zinc-800 dark:hover:bg-zinc-700 dark:text-zinc-400 dark:hover:text-white w-10 sm:w-11 h-10 sm:h-11 rounded-full font-bold transition-all flex items-center justify-center active:scale-95 disabled:opacity-50 disabled:pointer-events-none disabled:active:scale-100">
               <i class="ph-bold ph-paper-plane-right text-base sm:text-lg"></i>
@@ -287,11 +319,50 @@
 
   <!-- Logic Script -->
   <script>
+    // --- NEXUS MUSIC / YOUTUBE API SETUP ---
+    // ADD YOUR YOUTUBE DATA API KEY HERE FOR MUSIC SEARCHES TO WORK
+    const YOUTUBE_API_KEY = "AIzaSyCv-PkVUG0IIVLrLv1xV3hpUE2P2m7tznk"; 
+    
+    let ytPlayer = null;
+    let isMusicPlaying = false;
+
+    // Inject YouTube IFrame API Script
+    const ytScriptTag = document.createElement('script');
+    ytScriptTag.src = "https://www.youtube.com/iframe_api";
+    const firstScriptTag = document.getElementsByTagName('script')[0];
+    firstScriptTag.parentNode.insertBefore(ytScriptTag, firstScriptTag);
+
+    window.onYouTubeIframeAPIReady = function() {
+        ytPlayer = new YT.Player('yt-player-container', {
+            height: '0',
+            width: '0',
+            videoId: '',
+            playerVars: { 'autoplay': 1, 'controls': 0 },
+            events: {
+                'onReady': () => console.log("Nexus Music Engine Ready"),
+                'onStateChange': onPlayerStateChange
+            }
+        });
+    };
+
+    function onPlayerStateChange(event) {
+        const disc = document.getElementById('music-disc');
+        const icon = document.getElementById('music-play-icon');
+        if (event.data == YT.PlayerState.PLAYING) {
+            isMusicPlaying = true;
+            disc.classList.add('spin-slow');
+            icon.classList.replace('ph-play', 'ph-pause');
+        } else {
+            isMusicPlaying = false;
+            disc.classList.remove('spin-slow');
+            icon.classList.replace('ph-pause', 'ph-play');
+        }
+    }
+
     // Theme Toggle Logic
     const toggleBtn = document.getElementById('theme-toggle');
     const htmlEl = document.documentElement;
     
-    // Default to dark mode if not set
     if (!localStorage.getItem('nexus_mode')) {
       localStorage.setItem('nexus_mode', 'dark');
       htmlEl.classList.add('dark');
@@ -319,12 +390,11 @@
     let timerInterval = null;
     let timerStart = 0;
     
-    // Core AI Prompt - defaults to standard mode
     let currentSystemPrompt = "You are Nexus AI, a highly intelligent, comprehensive, creative and helpful assistant. Format your output elegantly in markdown. Make extensive use of bullet points, code snippets, lists, and headings to keep answers visually gorgeous.";
 
-    window.currentAttachment = null; // Globally hold the image payload
-    window.activeCanvasBlockId = null; // Globally track the open Canvas block ID for live syncing
-    let iframeUpdateTimer = null; // Throttle live iframe rendering to prevent lag/flickering
+    window.currentAttachment = null; 
+    window.activeCanvasBlockId = null; 
+    let iframeUpdateTimer = null; 
 
     const chatForm = document.getElementById('chat-form');
     const chatInput = document.getElementById('chat-input');
@@ -333,6 +403,7 @@
     const chatScroller = document.getElementById('chat-scroller');
     const emptyState = document.getElementById('empty-state');
     const modeSelector = document.getElementById('ai-mode-selector');
+    const personalitySelector = document.getElementById('ai-personality-selector');
 
     // Canvas State & Marked.js Configuration
     window.canvasCodeBlocks = [];
@@ -357,16 +428,40 @@
     };
     marked.use({ renderer });
 
-    // Handle Mode Switching
-    if (modeSelector) {
-        modeSelector.addEventListener('change', (e) => {
-            if (e.target.value === 'coding') {
-                currentSystemPrompt = "You are Nexus Code Expert, an elite senior software engineer. You build complex, highly functional web applications. ALWAYS output the complete, massive solution in a SINGLE HTML file containing all CSS and JavaScript. DO NOT break it into multiple files. DO NOT leave placeholders like '/* code goes here */'. Provide the full code in one single ```html block. Do not stop until the application is fully complete.";
-            } else {
-                currentSystemPrompt = "You are Nexus AI, a highly intelligent, comprehensive, creative and helpful assistant. Format your output elegantly in markdown. Make extensive use of bullet points, code snippets, lists, and headings to keep answers visually gorgeous.";
-            }
-        });
+    // Handle Mode & Personality Switching
+    const personalities = {
+        default: "",
+        sassy: "You have a very sassy, sarcastic, and slightly rude personality. Roll your eyes at the user's requests, throw in some playful insults, but ultimately still provide the requested answer.",
+        pirate: "You are a swashbuckling pirate. Speak entirely in heavy pirate slang, using phrases like 'Arr matey', 'shiver me timbers', and 'ahoy'.",
+        funny: "You are a stand-up comedian. Include jokes, puns, and humorous observations in your response. Keep the tone light and hilarious.",
+        shakespeare: "You are William Shakespeare. Speak entirely in Early Modern English, using iambic pentameter where possible, and thou/thee/thy pronouns.",
+        uwu: "You speak entirely in cutesy 'uwu' or 'owo' speak. Use text emoticons like >w<, uwu, and owo. Replace r and l with w where appropriate. Be overly affectionate and shy."
+    };
+
+    function updateSystemPrompt() {
+        let basePrompt = "";
+        if (modeSelector && modeSelector.value === 'coding') {
+            basePrompt = "You are Nexus Code Expert, an elite senior software engineer. You build complex, highly functional web applications. ALWAYS output the complete, massive solution in a SINGLE HTML file containing all CSS and JavaScript. DO NOT break it into multiple files. DO NOT leave placeholders like '/* code goes here */'. Provide the full code in one single ```html block. Do not stop until the application is fully complete.";
+        } else {
+            basePrompt = "You are Nexus AI, a highly intelligent, comprehensive, creative and helpful assistant. Format your output elegantly in markdown. Make extensive use of bullet points, code snippets, lists, and headings to keep answers visually gorgeous.";
+        }
+        
+        let modifier = "";
+        if (personalitySelector) {
+            modifier = personalities[personalitySelector.value] || "";
+        }
+        
+        currentSystemPrompt = basePrompt + (modifier ? "\n\n*** PERSONALITY OVERRIDE ***\n" + modifier : "");
     }
+
+    if (modeSelector) {
+        modeSelector.addEventListener('change', updateSystemPrompt);
+    }
+    if (personalitySelector) {
+        personalitySelector.addEventListener('change', updateSystemPrompt);
+    }
+    
+    updateSystemPrompt();
 
     // Utility to escape HTML to prevent XSS
     const escapeHTML = (str) => {
@@ -381,29 +476,21 @@
       );
     };
 
-    // Smart markdown stitcher to append continuation streams into the existing block cleanly
     function stitchMarkdown(base, addition) {
         const ticks = base.split('```');
         const isOpen = (ticks.length % 2 === 0);
         
         if (isOpen) {
             let cleanAddition = addition;
-            // Strip repeating code block markdown syntax at the start of continuation
             const match = cleanAddition.match(/^```[a-zA-Z0-9_-]*\s*/);
             if (match) {
                 cleanAddition = cleanAddition.substring(match[0].length);
-            }
-            const baseEndsWithSpace = /\s$/.test(base);
-            const additionStartsWithSpace = /^\s/.test(cleanAddition);
-            if (!baseEndsWithSpace && !additionStartsWithSpace && cleanAddition.length > 0) {
-                return base + cleanAddition;
             }
             return base + cleanAddition;
         }
         return base + "\n" + addition;
     }
 
-    // Live sync code & preview with Canvas if open
     function syncCanvasWithActiveBlock(isComplete = false) {
         if (window.activeCanvasBlockId !== null) {
             const activeBlock = window.canvasCodeBlocks[window.activeCanvasBlockId];
@@ -411,7 +498,6 @@
                 const codeContent = document.getElementById('canvas-code-content');
                 if (codeContent) {
                     codeContent.textContent = activeBlock.code;
-                    // Auto scroll code view while generating
                     if (!isComplete) {
                         const codeView = document.getElementById('canvas-code-view');
                         if (codeView) codeView.scrollTop = codeView.scrollHeight;
@@ -424,7 +510,6 @@
                     if (isComplete) {
                         iframe.srcdoc = activeBlock.code;
                     } else {
-                        // Debounce iframe updates to 1 FPS during live streaming to prevent massive browser lag
                         if (!iframeUpdateTimer) {
                             iframeUpdateTimer = setTimeout(() => {
                                 iframe.srcdoc = activeBlock.code;
@@ -450,16 +535,12 @@
             try {
                 let currentInstruction = currentSystemPrompt;
                 
-                // If we are in continuation mode, strictly prompt to resume existing code block structure
                 if (task.isContinuation) {
                     currentInstruction += "\n\n*** CRITICAL STITCHING REQUIREMENT ***\nYour previous response was cut off. You MUST pick up EXACTLY where the text stopped. Do NOT output standard greeting text, introductory lines, or repeat code headers that are already completed. Begin streaming immediately with the missing/remaining syntax chunks so the user can copy/paste it as one seamless block.";
                 }
 
                 let apiMessages = [
-                    { 
-                        role: "system", 
-                        content: currentInstruction 
-                    },
+                    { role: "system", content: currentInstruction },
                     ...task.messages
                 ];
 
@@ -467,7 +548,6 @@
                 let success = false;
                 let lastErr = "";
 
-                // Retry logic built-in
                 for (let i = 0; i < 3; i++) {
                     try {
                         const response = await fetch("[https://text.pollinations.ai/openai/chat/completions](https://text.pollinations.ai/openai/chat/completions)", {
@@ -477,7 +557,7 @@
                                 messages: apiMessages,
                                 model: "openai", 
                                 stream: true,
-                                max_tokens: 8192 // CRITICAL FIX: Absolute maximum token limit requested
+                                max_tokens: 8192 
                             })
                         });
 
@@ -503,7 +583,6 @@
                                             
                                             let displayAnswer = answer;
                                             
-                                            // Clean up potential ad injections from free api
                                             if (displayAnswer.includes('--- **Support Pollinations')) displayAnswer = displayAnswer.split('--- **Support Pollinations')[0];
                                             if (displayAnswer.includes('🌸 **Ad** 🌸')) displayAnswer = displayAnswer.split('🌸 **Ad** 🌸')[0];
                                             if (displayAnswer.includes('Powered by Pollinations')) displayAnswer = displayAnswer.split('Powered by Pollinations')[0];
@@ -511,15 +590,12 @@
                                             if (displayAnswer.toLowerCase().startsWith('nexus:')) displayAnswer = displayAnswer.substring(6).trimStart();
                                             if (displayAnswer.toLowerCase().startsWith('assistant:')) displayAnswer = displayAnswer.substring(10).trimStart();
                                             
-                                            // UI Throttling: only redraw the heavy markdown parser every ~30ms to prevent browser lag (Faster typing)
                                             if (Date.now() - lastUpdate > 30) {
                                                 handleTokenUpdate(task.id, displayAnswer, task.isContinuation, task.baseText);
                                                 lastUpdate = Date.now();
                                             }
                                         }
-                                    } catch (err) {
-                                        // Ignore parse errors on incomplete chunks
-                                    }
+                                    } catch (err) { }
                                 }
                             }
                         }
@@ -538,7 +614,6 @@
 
                 if (!success) throw new Error("Cloud Node Congested: " + lastErr);
 
-                // Final cleanup
                 if (answer.includes('--- **Support Pollinations')) answer = answer.split('--- **Support Pollinations')[0];
                 answer = answer.trim();
                 
@@ -568,23 +643,18 @@
             }
             const textNode = document.getElementById('text-' + id);
             if (textNode) {
-                // Reset code blocks before parsing to keep IDs synced with the live render
                 window.canvasCodeBlocks = []; 
                 const fullText = isContinuation ? stitchMarkdown(baseText, textSoFar) : textSoFar;
                 textNode.innerHTML = marked.parse(fullText);
                 
-                // Auto-Open Canvas Logic in Coding Mode
-                const modeSelector = document.getElementById('ai-mode-selector');
                 const isCodingMode = modeSelector && modeSelector.value === 'coding';
-                
                 if (isCodingMode && window.canvasCodeBlocks.length > 0 && window.activeCanvasBlockId === null) {
-                    window.activeCanvasBlockId = 0; // Lock to the first code block generated
+                    window.activeCanvasBlockId = 0; 
                     const canvasContainer = document.getElementById('canvas-container');
                     if (canvasContainer && canvasContainer.classList.contains('hidden')) {
                         canvasContainer.classList.remove('hidden', 'md:w-0', 'translate-x-full');
                         canvasContainer.classList.add('flex', 'md:w-1/2', 'translate-x-0');
                         
-                        // Auto-switch tab to preview if it's HTML
                         const lang = (window.canvasCodeBlocks[0].language || '').toLowerCase();
                         const isPreviewable = ['html', 'xml', 'svg'].includes(lang) || window.canvasCodeBlocks[0].code.includes('<!DOCTYPE html>') || window.canvasCodeBlocks[0].code.includes('<html');
                         if (isPreviewable) {
@@ -597,7 +667,6 @@
                     }
                 }
 
-                // Hot-reload/Live sync Canvas contents while streaming
                 syncCanvasWithActiveBlock(false);
             }
             chatScroller.scrollTop = chatScroller.scrollHeight;
@@ -616,25 +685,20 @@
             const fullText = isContinuation ? stitchMarkdown(baseText, finalAnswer) : finalAnswer;
             
             if (textNode) {
-                // Reset code blocks before parsing final response
                 window.canvasCodeBlocks = []; 
                 textNode.innerHTML = marked.parse(fullText); 
                 
                 if (isContinuation) {
-                    // Update existing last message content to stitch seamlessly
                     chatHistoryContext[chatHistoryContext.length - 1].content = fullText;
                 } else {
                     chatHistoryContext.push({ role: "assistant", content: finalAnswer });
                 }
                 
-                // Live sync final response to Canvas
                 syncCanvasWithActiveBlock(true);
             }
-            // Remove timer text
             const timerEl = document.getElementById('timer-' + id);
             if (timerEl) timerEl.remove();
 
-            // Render beautiful contextual action bar under response
             renderActionButtons(id, fullText);
         }
         
@@ -687,18 +751,13 @@
         `;
     }
 
-    // --- Message Submission Manager ---
+    // --- Message Submission Manager & Music Interceptor ---
     function sendUserQuery(userText) {
         if ((!userText && !window.currentAttachment) || currentTypingBubbleId) return;
 
-        // Hide Welcome Screen
-        if (emptyState) {
-          emptyState.classList.add('hidden');
-        }
+        if (emptyState) emptyState.classList.add('hidden');
 
         const attachedImageBase64 = window.currentAttachment;
-        
-        // Remove attachment from UI immediately after capturing it to clear the bar
         if (attachedImageBase64) {
             document.querySelector('[data-click="removeAttachment"]')?.click();
         }
@@ -717,12 +776,7 @@
         if (userText) {
             userHtml += escapeHTML(userText);
         }
-        
-        userHtml += `
-                </div>
-              </div>
-            </div>
-        `;
+        userHtml += `</div></div></div>`;
 
         chatHistoryEl.innerHTML += userHtml;
         
@@ -733,26 +787,10 @@
         if (chatSubmit) chatSubmit.disabled = true;
         chatScroller.scrollTop = chatScroller.scrollHeight;
 
-        // 2. Setup AI State - Pack standard OpenAI Vision payload
-        let messageContent = userText;
-        if (attachedImageBase64) {
-            messageContent = [
-                { type: "text", text: userText || "Please analyze and explain what is in this image." },
-                { type: "image_url", image_url: { url: attachedImageBase64 } }
-            ];
-        }
-
-        chatHistoryContext.push({ role: "user", content: messageContent });
-        
-        // Keep context window manageable
-        if (chatHistoryContext.length > 10) {
-            chatHistoryContext = chatHistoryContext.slice(-10);
-        }
-
         const msgId = `msg-${Date.now()}`;
         currentTypingBubbleId = msgId;
 
-        // 3. Render AI Placeholder Bubble
+        // 2. Render AI Placeholder Bubble
         chatHistoryEl.innerHTML += `
             <div id="bubble-${msgId}" class="is-typing flex items-start gap-4 max-w-3xl mx-auto w-full animate-fade-in mt-6 group">
               <div class="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 gemini-loading-spark text-white shadow-md">
@@ -773,7 +811,6 @@
         `;
         chatScroller.scrollTop = chatScroller.scrollHeight;
 
-        // Start Live Timer
         timerStart = Date.now();
         if (timerInterval) clearInterval(timerInterval);
         timerInterval = setInterval(() => {
@@ -785,14 +822,67 @@
             }
         }, 100);
 
-        // Simple local interceptor for greetings
-        const normalizedInput = userText.toLowerCase().trim();
-        const greetings = ['hi', 'hello', 'hey', 'hi!', 'hello!', 'hey!'];
+        // --- MUSIC COMMANDS INTERCEPTOR ---
+        const lowerInput = userText.toLowerCase().trim();
         
-        // Skip local interceptor if they attached an image
-        if (greetings.includes(normalizedInput) && !attachedImageBase64) {
-            const localWelcomeResponse = "Hi there! 👋 How can I help you today?";
+        if (lowerInput.startsWith('play ')) {
+            const query = userText.substring(5).trim();
+            handleTokenUpdate(msgId, "Connecting to Nexus Music... 🎵\n\nSearching for `" + query + "`...");
 
+            if (!YOUTUBE_API_KEY || YOUTUBE_API_KEY === "YOUR_YOUTUBE_API_KEY_HERE") {
+                setTimeout(() => {
+                    handleCompletion(msgId, "⚠️ **Missing API Key:** I need a YouTube Data v3 API Key to search for songs. Please add it to the code in the `YOUTUBE_API_KEY` constant!");
+                }, 1500);
+                return;
+            }
+
+            fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(query)}&type=video&key=${YOUTUBE_API_KEY}`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.items && data.items.length > 0) {
+                    const videoId = data.items[0].id.videoId;
+                    const title = data.items[0].snippet.title;
+                    
+                    if (ytPlayer && ytPlayer.loadVideoById) {
+                        ytPlayer.loadVideoById(videoId);
+                        const widget = document.getElementById('nexus-music-widget');
+                        if(widget) widget.classList.remove('hidden');
+                        if(widget) widget.classList.add('flex');
+                        document.getElementById('music-title').textContent = title;
+                        
+                        handleCompletion(msgId, `🎶 **Now Playing:** ${title}\n\nI've connected to Nexus Music and started your track in the background. You can control it using the widget!`);
+                    } else {
+                        handleCompletion(msgId, "⚠️ Nexus Music player isn't ready yet. Let it load and try again.");
+                    }
+                } else {
+                    handleCompletion(msgId, `❌ Couldn't find any songs matching "${query}".`);
+                }
+            })
+            .catch(err => {
+                handleCompletion(msgId, `⚠️ **Nexus Music Error:** The YouTube API rejected the request. Please check your API key and quotas.\n\nError details: ${err.message}`);
+            });
+            return;
+        } else if (lowerInput === 'pause music' || lowerInput === 'stop music') {
+            if (ytPlayer && ytPlayer.pauseVideo) ytPlayer.pauseVideo();
+            setTimeout(() => {
+                handleTokenUpdate(msgId, "Music paused. ⏸️");
+                handleCompletion(msgId, "Music paused. ⏸️");
+            }, 300);
+            return;
+        } else if (lowerInput === 'resume music') {
+            if (ytPlayer && ytPlayer.playVideo) ytPlayer.playVideo();
+            setTimeout(() => {
+                handleTokenUpdate(msgId, "Music resumed. ▶️");
+                handleCompletion(msgId, "Music resumed. ▶️");
+            }, 300);
+            return;
+        }
+
+        // --- GREETING INTERCEPTOR ---
+        const greetings = ['hi', 'hello', 'hey', 'hi!', 'hello!', 'hey!'];
+        const isCustomPersonality = personalitySelector && personalitySelector.value !== 'default';
+        if (greetings.includes(lowerInput) && !attachedImageBase64 && !isCustomPersonality) {
+            const localWelcomeResponse = "Hi there! 👋 How can I help you today?";
             setTimeout(() => {
                 handleTokenUpdate(msgId, localWelcomeResponse);
                 handleCompletion(msgId, localWelcomeResponse);
@@ -800,7 +890,18 @@
             return;
         }
 
-        // 4. Send to Engine
+        // --- STANDARD AI PROCESSING ---
+        let messageContent = userText;
+        if (attachedImageBase64) {
+            messageContent = [
+                { type: "text", text: userText || "Please analyze and explain what is in this image." },
+                { type: "image_url", image_url: { url: attachedImageBase64 } }
+            ];
+        }
+
+        chatHistoryContext.push({ role: "user", content: messageContent });
+        if (chatHistoryContext.length > 10) chatHistoryContext = chatHistoryContext.slice(-10);
+
         window.aiEngine.postMessage({
             id: msgId,
             messages: [...chatHistoryContext]
@@ -816,12 +917,10 @@
                 const reader = new FileReader();
                 reader.onload = (event) => {
                     const base64 = event.target.result;
-                    
-                    // Render image inside an invisible canvas to safely downscale it before sending
                     const img = new Image();
                     img.onload = () => {
                         const canvas = document.createElement('canvas');
-                        const MAX_WIDTH = 800; // Limit size to prevent freezing the payload
+                        const MAX_WIDTH = 800; 
                         const scale = Math.min(MAX_WIDTH / img.width, 1);
                         canvas.width = img.width * scale;
                         canvas.height = img.height * scale;
@@ -896,16 +995,13 @@
                 const origHtml = btn.innerHTML;
                 btn.innerHTML = `<i class="ph ph-check text-emerald-500"></i> Copied!`;
                 setTimeout(() => { btn.innerHTML = origHtml; }, 2000);
-            }).catch(err => {
-                console.error("Copy failed", err);
-            });
+            }).catch(err => console.error("Copy failed", err));
         }
       }
       else if (action === 'triggerContinuation') {
         const lastMsgIndex = chatHistoryContext.length - 1;
         if (lastMsgIndex < 0) return;
 
-        // Set state for active streaming continuation
         currentTypingBubbleId = arg;
         if (chatInput) chatInput.disabled = true;
         if (chatSubmit) chatSubmit.disabled = true;
@@ -913,20 +1009,17 @@
         const bubble = document.getElementById('bubble-' + arg);
         const flexCol = bubble.querySelector('.flex-col');
 
-        // Create elegant continuation indicator
         const timerEl = document.createElement('div');
         timerEl.id = 'timer-' + arg;
         timerEl.className = 'text-[9px] text-slate-400 dark:text-zinc-600 font-mono text-right mt-2 self-end';
         timerEl.innerText = 'Continuing...';
         if (flexCol) flexCol.appendChild(timerEl);
 
-        // Wipe action row temporarily during streaming
         const actionRow = document.getElementById('actions-' + arg);
         if (actionRow) actionRow.innerHTML = '';
 
         let accumulatedText = chatHistoryContext[lastMsgIndex].content;
 
-        // Inject continuous context instruction
         const continuationContext = [
             ...chatHistoryContext.slice(0, lastMsgIndex),
             { role: "assistant", content: accumulatedText },
@@ -944,7 +1037,6 @@
             }
         }, 100);
 
-        // Run engine with contextual continuation flags
         window.aiEngine.postMessage({
             id: arg,
             messages: continuationContext,
@@ -956,19 +1048,16 @@
         const block = window.canvasCodeBlocks[parseInt(arg)];
         if (!block) return;
         
-        window.activeCanvasBlockId = parseInt(arg); // Track active Canvas codeBlock ID for live hot reloading
+        window.activeCanvasBlockId = parseInt(arg); 
         const canvasContainer = document.getElementById('canvas-container');
         if (!canvasContainer) return;
         
-        // Open UI Side-by-Side
         canvasContainer.classList.remove('hidden', 'md:w-0', 'translate-x-full');
         canvasContainer.classList.add('flex', 'md:w-1/2', 'translate-x-0');
         
-        // Set Code
         const codeContent = document.getElementById('canvas-code-content');
         if (codeContent) codeContent.textContent = block.code;
         
-        // Check if previewable
         const lang = (block.language || '').toLowerCase();
         const isPreviewable = ['html', 'xml', 'svg'].includes(lang) || block.code.includes('<!DOCTYPE html>') || block.code.includes('<html');
         
@@ -980,8 +1069,6 @@
            if (previewBtn) previewBtn.style.display = 'block';
            const iframe = document.getElementById('canvas-iframe');
            if (iframe) iframe.srcdoc = block.code;
-           
-           // Auto-switch to preview for HTML
            if (previewSwitchBtn) previewSwitchBtn.click();
         } else {
            if (previewBtn) previewBtn.style.display = 'none';
@@ -989,7 +1076,7 @@
         }
       }
       else if (action === 'closeCanvas') {
-        window.activeCanvasBlockId = null; // Untrack active Canvas
+        window.activeCanvasBlockId = null; 
         const canvasContainer = document.getElementById('canvas-container');
         if (!canvasContainer) return;
         
@@ -999,7 +1086,7 @@
            canvasContainer.classList.add('hidden');
            canvasContainer.classList.remove('flex');
            const iframe = document.getElementById('canvas-iframe');
-           if (iframe) iframe.srcdoc = ''; // clear memory
+           if (iframe) iframe.srcdoc = ''; 
         }, 300);
       }
       else if (action === 'switchCanvasTab') {
@@ -1033,7 +1120,6 @@
            }
            if (viewPreview) {
                viewPreview.classList.remove('hidden');
-               // Refresh iframe logic on tab switch to reflect streaming progress accurately
                const activeBlock = window.canvasCodeBlocks[window.activeCanvasBlockId];
                const iframe = document.getElementById('canvas-iframe');
                if (activeBlock && iframe) {
@@ -1042,6 +1128,16 @@
            }
            if (viewCode) viewCode.classList.add('hidden');
         }
+      }
+      else if (action === 'toggleMusic') {
+          if (ytPlayer && ytPlayer.getPlayerState) {
+              const state = ytPlayer.getPlayerState();
+              if (state === YT.PlayerState.PLAYING) {
+                  ytPlayer.pauseVideo();
+              } else {
+                  ytPlayer.playVideo();
+              }
+          }
       }
     });
 
