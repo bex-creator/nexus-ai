@@ -221,17 +221,30 @@
     <!-- Input Container -->
     <footer class="flex-none pb-6 pt-2 px-4 sm:px-6 w-full max-w-4xl mx-auto flex justify-center">
       <div class="w-full relative">
-        <form id="chat-form" class="relative flex items-center bg-white dark:bg-gemini-darkCard border border-slate-200/80 dark:border-zinc-800 rounded-full shadow-[0_4px_30px_rgba(0,0,0,0.04)] dark:shadow-[0_12px_40px_rgba(0,0,0,0.3)] transition-all overflow-hidden focus-within:ring-2 focus-within:ring-indigo-500/20 focus-within:border-slate-300 dark:focus-within:border-zinc-700 pr-2 pl-4 sm:pl-6">
+        <form id="chat-form" class="relative flex flex-col justify-center bg-white dark:bg-gemini-darkCard border border-slate-200/80 dark:border-zinc-800 rounded-full shadow-[0_4px_30px_rgba(0,0,0,0.04)] dark:shadow-[0_12px_40px_rgba(0,0,0,0.3)] transition-all overflow-hidden focus-within:ring-2 focus-within:ring-indigo-500/20 focus-within:border-slate-300 dark:focus-within:border-zinc-700">
           
-          <button type="button" class="flex-none p-2 text-slate-400 hover:text-slate-600 dark:text-zinc-500 dark:hover:text-zinc-300 transition-colors" title="Upload Image (Simulated)">
-            <i class="ph ph-image text-xl sm:text-2xl"></i>
-          </button>
+          <!-- Image Attachment Preview -->
+          <div id="attachment-preview" class="hidden px-4 sm:px-6 pt-4 pb-0 w-full animate-fade-in">
+            <div class="relative inline-block">
+              <img id="attachment-img" src="" class="h-16 w-16 sm:h-20 sm:w-20 object-cover rounded-xl border border-slate-200 dark:border-zinc-700 shadow-sm">
+              <button type="button" data-click="removeAttachment" class="absolute -top-2 -right-2 bg-slate-800 dark:bg-zinc-700 text-white rounded-full p-1.5 shadow-md hover:bg-slate-700 dark:hover:bg-zinc-600 transition-colors cursor-pointer">
+                <i class="ph-bold ph-x text-[10px]"></i>
+              </button>
+            </div>
+          </div>
 
-          <input type="text" id="chat-input" placeholder="Ask Nexus AI..." autocomplete="off" class="flex-1 bg-transparent py-4 px-2 sm:px-3 text-base text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-zinc-500 outline-none w-full min-w-0">
-          
-          <button type="submit" id="chat-submit" class="flex-none bg-slate-100 hover:bg-slate-200 text-slate-400 hover:text-slate-900 dark:bg-zinc-800 dark:hover:bg-zinc-700 dark:text-zinc-400 dark:hover:text-white w-10 sm:w-11 h-10 sm:h-11 rounded-full font-bold transition-all flex items-center justify-center active:scale-95 disabled:opacity-50 disabled:pointer-events-none disabled:active:scale-100">
-            <i class="ph-bold ph-paper-plane-right text-base sm:text-lg"></i>
-          </button>
+          <div class="flex items-center w-full pr-2 pl-4 sm:pl-6 pb-1 pt-1">
+            <button type="button" data-click="triggerFileUpload" class="flex-none p-2 -ml-2 text-slate-400 hover:text-slate-600 dark:text-zinc-500 dark:hover:text-zinc-300 transition-colors" title="Upload Image">
+              <i class="ph ph-image text-xl sm:text-2xl"></i>
+            </button>
+            <input type="file" id="file-upload-input" accept="image/*" class="hidden">
+
+            <input type="text" id="chat-input" placeholder="Ask Nexus AI..." autocomplete="off" class="flex-1 bg-transparent py-3 sm:py-4 px-2 sm:px-3 text-base text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-zinc-500 outline-none w-full min-w-0">
+            
+            <button type="submit" id="chat-submit" class="flex-none bg-slate-100 hover:bg-slate-200 text-slate-400 hover:text-slate-900 dark:bg-zinc-800 dark:hover:bg-zinc-700 dark:text-zinc-400 dark:hover:text-white w-10 sm:w-11 h-10 sm:h-11 rounded-full font-bold transition-all flex items-center justify-center active:scale-95 disabled:opacity-50 disabled:pointer-events-none disabled:active:scale-100">
+              <i class="ph-bold ph-paper-plane-right text-base sm:text-lg"></i>
+            </button>
+          </div>
         </form>
         <div class="text-center mt-3">
           <span class="text-[10px] sm:text-xs text-slate-400 dark:text-zinc-500 font-medium">Nexus AI may display inaccurate info, including about people, so double-check its responses.</span>
@@ -308,6 +321,8 @@
     
     // Core AI Prompt - defaults to standard mode
     let currentSystemPrompt = "You are Nexus AI, a highly intelligent, comprehensive, creative and helpful assistant. Format your output elegantly in markdown. Make extensive use of bullet points, code snippets, lists, and headings to keep answers visually gorgeous.";
+
+    window.currentAttachment = null; // Globally hold the image payload
 
     const chatForm = document.getElementById('chat-form');
     const chatInput = document.getElementById('chat-input');
@@ -433,7 +448,7 @@
                                             
                                             // UI Throttling: only redraw the heavy markdown parser every ~50ms to prevent browser lag
                                             if (Date.now() - lastUpdate > 50) {
-                                                handleTokenUpdate(task.id, displayAnswer);
+                                                handleTokenUpdate(task.id, displayAnswer, task.isContinuation, task.baseText);
                                                 lastUpdate = Date.now();
                                             }
                                         }
@@ -462,7 +477,7 @@
                 if (answer.includes('--- **Support Pollinations')) answer = answer.split('--- **Support Pollinations')[0];
                 answer = answer.trim();
                 
-                handleCompletion(task.id, answer);
+                handleCompletion(task.id, answer, task.isContinuation, task.baseText);
 
             } catch (err) {
                 handleError(task.id, String(err));
@@ -480,7 +495,7 @@
 
     // --- UI Update Handlers ---
 
-    function handleTokenUpdate(id, textSoFar) {
+    function handleTokenUpdate(id, textSoFar, isContinuation = false, baseText = "") {
         if (currentTypingBubbleId === id) {
             const container = document.getElementById('bubble-' + id);
             if (container && container.classList.contains('is-typing')) {
@@ -490,13 +505,14 @@
             if (textNode) {
                 // Reset code blocks before parsing to keep IDs synced with the live render
                 window.canvasCodeBlocks = []; 
-                textNode.innerHTML = marked.parse(textSoFar);
+                const fullText = isContinuation ? (baseText + "\n" + textSoFar) : textSoFar;
+                textNode.innerHTML = marked.parse(fullText);
             }
             chatScroller.scrollTop = chatScroller.scrollHeight;
         }
     }
 
-    function handleCompletion(id, finalAnswer) {
+    function handleCompletion(id, finalAnswer, isContinuation = false, baseText = "") {
         if (timerInterval) clearInterval(timerInterval);
         
         if (chatInput) chatInput.disabled = false;
@@ -505,15 +521,26 @@
 
         if (currentTypingBubbleId === id) {
             const textNode = document.getElementById('text-' + id);
+            const fullText = isContinuation ? (baseText + "\n" + finalAnswer) : finalAnswer;
+            
             if (textNode) {
                 // Reset code blocks before parsing final response
                 window.canvasCodeBlocks = []; 
-                textNode.innerHTML = marked.parse(finalAnswer); 
-                chatHistoryContext.push({ role: "assistant", content: finalAnswer });
+                textNode.innerHTML = marked.parse(fullText); 
+                
+                if (isContinuation) {
+                    // Update existing last message content instead of pushing a new item to keep thread clean
+                    chatHistoryContext[chatHistoryContext.length - 1].content = fullText;
+                } else {
+                    chatHistoryContext.push({ role: "assistant", content: finalAnswer });
+                }
             }
             // Remove timer text
             const timerEl = document.getElementById('timer-' + id);
             if (timerEl) timerEl.remove();
+
+            // Render beautiful contextual action bar under response
+            renderActionButtons(id, fullText);
         }
         
         currentTypingBubbleId = null;
@@ -541,26 +568,68 @@
         chatScroller.scrollTop = chatScroller.scrollHeight;
     }
 
+    // --- Action Buttons Generation ---
+    function renderActionButtons(id, fullText) {
+        const bubble = document.getElementById('bubble-' + id);
+        if (!bubble) return;
+
+        let actionRow = document.getElementById('actions-' + id);
+        if (!actionRow) {
+            actionRow = document.createElement('div');
+            actionRow.id = 'actions-' + id;
+            actionRow.className = 'flex items-center gap-2 mt-4 pt-2 border-t border-slate-100 dark:border-zinc-800/40 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity duration-200';
+            const flexCol = bubble.querySelector('.flex-col');
+            if (flexCol) flexCol.appendChild(actionRow);
+        }
+
+        actionRow.innerHTML = `
+            <button data-click="copyResponse" data-arg="${id}" class="text-xs font-semibold text-slate-500 hover:text-slate-900 dark:text-zinc-400 dark:hover:text-white flex items-center gap-1.5 px-3 py-1.5 rounded-full hover:bg-slate-100 dark:hover:bg-zinc-800 transition-all">
+                <i class="ph ph-copy"></i> Copy
+            </button>
+            <button data-click="triggerContinuation" data-arg="${id}" class="text-xs font-semibold text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300 flex items-center gap-1.5 px-3 py-1.5 rounded-full hover:bg-indigo-50 dark:hover:bg-indigo-950/40 transition-all">
+                <i class="ph ph-play-forward"></i> Continue Writing
+            </button>
+        `;
+    }
+
     // --- Message Submission Manager ---
     function sendUserQuery(userText) {
-        if (!userText || currentTypingBubbleId) return;
+        if ((!userText && !window.currentAttachment) || currentTypingBubbleId) return;
 
         // Hide Welcome Screen
         if (emptyState) {
           emptyState.classList.add('hidden');
         }
 
+        const attachedImageBase64 = window.currentAttachment;
+        
+        // Remove attachment from UI immediately after capturing it to clear the bar
+        if (attachedImageBase64) {
+            document.querySelector('[data-click="removeAttachment"]')?.click();
+        }
+
         // 1. Render User Message
-        chatHistoryEl.innerHTML += `
+        let userHtml = `
             <div class="flex items-start justify-end gap-4 max-w-3xl mx-auto w-full animate-fade-in">
               <div class="flex flex-col items-end max-w-[85%]">
                 <div class="text-[11px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest mb-1">You</div>
                 <div class="bg-slate-200/60 dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 p-4 rounded-3xl rounded-tr-none text-[15px] leading-relaxed font-medium">
-                  ${escapeHTML(userText)}
+        `;
+        
+        if (attachedImageBase64) {
+            userHtml += `<img src="${attachedImageBase64}" class="max-w-full h-auto rounded-xl mb-3 border border-slate-300 dark:border-zinc-600 max-h-64 object-contain">`;
+        }
+        if (userText) {
+            userHtml += escapeHTML(userText);
+        }
+        
+        userHtml += `
                 </div>
               </div>
             </div>
         `;
+
+        chatHistoryEl.innerHTML += userHtml;
         
         if (chatInput) {
             chatInput.value = '';
@@ -569,8 +638,16 @@
         if (chatSubmit) chatSubmit.disabled = true;
         chatScroller.scrollTop = chatScroller.scrollHeight;
 
-        // 2. Setup AI State
-        chatHistoryContext.push({ role: "user", content: userText });
+        // 2. Setup AI State - Pack standard OpenAI Vision payload
+        let messageContent = userText;
+        if (attachedImageBase64) {
+            messageContent = [
+                { type: "text", text: userText || "Please analyze and explain what is in this image." },
+                { type: "image_url", image_url: { url: attachedImageBase64 } }
+            ];
+        }
+
+        chatHistoryContext.push({ role: "user", content: messageContent });
         
         // Keep context window manageable
         if (chatHistoryContext.length > 10) {
@@ -582,7 +659,7 @@
 
         // 3. Render AI Placeholder Bubble
         chatHistoryEl.innerHTML += `
-            <div id="bubble-${msgId}" class="is-typing flex items-start gap-4 max-w-3xl mx-auto w-full animate-fade-in mt-6">
+            <div id="bubble-${msgId}" class="is-typing flex items-start gap-4 max-w-3xl mx-auto w-full animate-fade-in mt-6 group">
               <div class="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 gemini-loading-spark text-white shadow-md">
                 <i class="ph-fill ph-sparkle text-sm animate-pulse"></i>
               </div>
@@ -617,7 +694,8 @@
         const normalizedInput = userText.toLowerCase().trim();
         const greetings = ['hi', 'hello', 'hey', 'hi!', 'hello!', 'hey!'];
         
-        if (greetings.includes(normalizedInput)) {
+        // Skip local interceptor if they attached an image
+        if (greetings.includes(normalizedInput) && !attachedImageBase64) {
             const localWelcomeResponse = "Hi there! 👋 How can I help you today?";
 
             setTimeout(() => {
@@ -631,6 +709,50 @@
         window.aiEngine.postMessage({
             id: msgId,
             messages: [...chatHistoryContext]
+        });
+    }
+
+    // --- File Upload Logic ---
+    const fileUploadInput = document.getElementById('file-upload-input');
+    if (fileUploadInput) {
+        fileUploadInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    const base64 = event.target.result;
+                    
+                    // Render image inside an invisible canvas to safely downscale it before sending
+                    const img = new Image();
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        const MAX_WIDTH = 800; // Limit size to prevent freezing the payload
+                        const scale = Math.min(MAX_WIDTH / img.width, 1);
+                        canvas.width = img.width * scale;
+                        canvas.height = img.height * scale;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                        
+                        window.currentAttachment = canvas.toDataURL('image/jpeg', 0.8);
+                        
+                        const preview = document.getElementById('attachment-preview');
+                        const imgEl = document.getElementById('attachment-img');
+                        const form = document.getElementById('chat-form');
+                        
+                        if (preview && imgEl) {
+                            preview.classList.remove('hidden');
+                            imgEl.src = window.currentAttachment;
+                            if (form) {
+                                form.classList.remove('rounded-full');
+                                form.classList.add('rounded-3xl');
+                            }
+                        }
+                        if (chatInput) chatInput.focus();
+                    };
+                    img.src = base64;
+                };
+                reader.readAsDataURL(file);
+            }
         });
     }
 
@@ -653,6 +775,87 @@
       if (action === 'fillSuggestion') {
         if (chatInput) chatInput.value = arg;
         sendUserQuery(arg);
+      }
+      else if (action === 'triggerFileUpload') {
+        if (fileUploadInput) fileUploadInput.click();
+      }
+      else if (action === 'removeAttachment') {
+        window.currentAttachment = null;
+        const preview = document.getElementById('attachment-preview');
+        const img = document.getElementById('attachment-img');
+        const form = document.getElementById('chat-form');
+        
+        if (preview) preview.classList.add('hidden');
+        if (img) img.src = '';
+        if (form) {
+            form.classList.remove('rounded-3xl');
+            form.classList.add('rounded-full');
+        }
+      }
+      else if (action === 'copyResponse') {
+        const lastMsgIndex = chatHistoryContext.length - 1;
+        if (lastMsgIndex >= 0) {
+            const rawContent = chatHistoryContext[lastMsgIndex].content;
+            navigator.clipboard.writeText(rawContent).then(() => {
+                const btn = e.target.closest('button');
+                const origHtml = btn.innerHTML;
+                btn.innerHTML = `<i class="ph ph-check text-emerald-500"></i> Copied!`;
+                setTimeout(() => { btn.innerHTML = origHtml; }, 2000);
+            }).catch(err => {
+                console.error("Copy failed", err);
+            });
+        }
+      }
+      else if (action === 'triggerContinuation') {
+        const lastMsgIndex = chatHistoryContext.length - 1;
+        if (lastMsgIndex < 0) return;
+
+        // Set state for active streaming continuation
+        currentTypingBubbleId = arg;
+        if (chatInput) chatInput.disabled = true;
+        if (chatSubmit) chatSubmit.disabled = true;
+
+        const bubble = document.getElementById('bubble-' + arg);
+        const flexCol = bubble.querySelector('.flex-col');
+
+        // Create elegant continuation indicator
+        const timerEl = document.createElement('div');
+        timerEl.id = 'timer-' + arg;
+        timerEl.className = 'text-[9px] text-slate-400 dark:text-zinc-600 font-mono text-right mt-2 self-end';
+        timerEl.innerText = 'Continuing...';
+        if (flexCol) flexCol.appendChild(timerEl);
+
+        // Wipe action row temporarily during streaming
+        const actionRow = document.getElementById('actions-' + arg);
+        if (actionRow) actionRow.innerHTML = '';
+
+        let accumulatedText = chatHistoryContext[lastMsgIndex].content;
+
+        // Inject continuous context instruction
+        const continuationContext = [
+            ...chatHistoryContext.slice(0, lastMsgIndex),
+            { role: "assistant", content: accumulatedText },
+            { 
+               role: "user", 
+               content: "Continue writing your previous response exactly from the character where you cut off. Do not repeat previous context, explanation, or syntax headers unless closing/reopening a code block. Start immediately with the continuation text so it stitches seamlessly." 
+            }
+        ];
+
+        timerStart = Date.now();
+        if (timerInterval) clearInterval(timerInterval);
+        timerInterval = setInterval(() => {
+            if (timerEl) {
+                timerEl.innerText = 'Continuing... ' + ((Date.now() - timerStart) / 1000).toFixed(1) + 's';
+            }
+        }, 100);
+
+        // Run engine with contextual continuation flags
+        window.aiEngine.postMessage({
+            id: arg,
+            messages: continuationContext,
+            isContinuation: true,
+            baseText: accumulatedText
+        });
       }
       else if (action === 'openCanvas') {
         const block = window.canvasCodeBlocks[parseInt(arg)];
