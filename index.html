@@ -1,1030 +1,576 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nexus AI - Chromebook & Pro Optimized</title>
-    <!-- Dynamic PWA Manifest Link -->
-    <link rel="manifest" id="manifest-link">
-    <meta name="theme-color" content="#131314">
-    <!-- Apple/Desktop fallback icon -->
-    <link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iIzgxOGNmOCI+PHBhdGggZD0iTTExLjY0NSAyMC45MWwtLjAwNy0uMDAzLS4wMDMtLjAwMWExLjk5IDEuOTkgMCAwMS0uMTk0LS4xMjRjLS4yMDEtLjE1LS40Ni0uMzk1LS43MTctLjc0NS0uNTE1LS43LTEuMDAyLTEuNzQ4LTEuMzQ0LTMuMDg1YTExLjkxIDExLjkxIDAgMDEtLjMzNC0xLjc0NWwtLjAxNC0uMTE0LS4xMTQtLjAxNGExMS45MSAxMS45MSAwIDAxLTEuNzQ1LS4zMzRjLTEuMzM3LS4zNDItMi4zODUtLjgyOS0zLjA4NS0xLjM0NC0uMzUtLjI1Ny0uNTk0LS41MTYtLjc0NS0uNzE3YTEuOTkgMS45OSAwIDAxLS4xMjUtLjE5NEwzLjEgMTIuMzVsLjAwMS0uMDAzLjAwMy0uMDA3YTIuMDc4IDIuMDc4IDAgMDEuMzUzLS40NWMuMjktLjI3Mi43MS0uNTg4IDEuMjU4LS45MiAxLjA5Ni0uNjY1IDIuNTg1LTEuMzQ4IDQuMjk4LTEuNjM4bC4xNDItLjAyNC4wMjQtLjE0MmMuMjktMS43MTMuOTczLTMuMjAyIDEuNjM4LTQuMjk4LjMzMi0uNTQ4LjY0OC0uOTY3LjkyLTEuMjU4YTIuMDc4IDIuMDc4IDAgMDEuNDUzLS4zNTNsLjAwNi0uMDAzLjAwNC0uMDAxYTEuOTkgMS45OSAwIDAxLjE5NC4xMjRjLjIwMS4xNS40Ni4zOTUuNzE3Ljc0NS41MTUuNyAxLjAwMiAxLjc0OCAxLjM0NCAzLjA4NS4xMjIuNDguMjM0Ljk2Mi4zMzQgMS43NDVsLjAxNC4xMTQuMTE0LjAxNGMuNzgzLjEgMS4yNjUuMjEyIDEuNzQ1LjMzNCAxLjMzNy4zNDIgMi4zODUuODI5IDMuMDg1IDEuMzQ0LjM1LjI1Ny41OTQuNTE2Ljc0NS43MTcuMDQzLjA1OC4wODYuMTI0LjEyNS4xOTRsLjAwNy4wMDMuMDAzLjAwMWEyLjA3OCAyLjA3OCAwIDAxLS4zNTMuNDVjLS4yOS4yNzItLjcxLjU4OC0xLjI1OC45Mi0xLjA5Ni42NjUtMi41ODUgMS4zNDgtNC4yOTggMS42MzhsLS4xNDIuMDI0LS4wMjQuMTQyYy0uMjkgMS43MTMtLjk3MyAzLjIwMi0xLjYzOCA0LjI5OC0uMzMyLjU0OC0uNjQ4Ljk2Ny0uOTIgMS4yNThhMi4wNzggMi4wNzggMCAwMS0uNDUzLjM1M3oiIC8+PC9zdmc+">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
-        
-        body {
-            font-family: 'Outfit', sans-serif;
-            background-color: #131314;
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nexus AI</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Product Sans', 'Google Sans', 'system-ui', '-apple-system', 'sans-serif'],
+          },
+          colors: {
+            gemini: {
+              lightBg: '#f0f4f9',
+              lightCard: '#ffffff',
+              darkBg: '#131314',
+              darkCard: '#1e1f20',
+              accentBlue: '#4285f4',
+              accentPurple: '#9b72cb',
+              accentPink: '#d96570',
+            }
+          }
         }
+      }
+    }
+  </script>
 
-        /* Custom scrollbar for Gemini look */
-        ::-webkit-scrollbar {
-            width: 6px;
-            height: 6px;
-        }
-        ::-webkit-scrollbar-track {
-            background: #131314; 
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #3c4043; 
-            border-radius: 99px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #4f5357; 
-        }
+  <!-- Phosphor Icons -->
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
 
-        /* Sparkle animation for loading status */
-        @keyframes pulseGlow {
-            0%, 100% { opacity: 0.6; transform: scale(1); filter: drop-shadow(0 0 2px rgba(129, 140, 248, 0.4)); }
-            50% { opacity: 1; transform: scale(1.05); filter: drop-shadow(0 0 10px rgba(129, 140, 248, 0.8)); }
-        }
-        .status-glow {
-            animation: pulseGlow 2s infinite ease-in-out;
-        }
+  <!-- Marked.js for High-Quality Markdown Rendering -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
-        /* Typing indicator dots */
-        .dot-flashing {
-            position: relative;
-            width: 6px;
-            height: 6px;
-            border-radius: 5px;
-            background-color: #a8b2c1;
-            animation: dot-flashing 1s infinite linear alternate;
-            animation-delay: 0.5s;
-        }
-        .dot-flashing::before, .dot-flashing::after {
-            content: '';
-            display: inline-block;
-            position: absolute;
-            top: 0;
-        }
-        .dot-flashing::before {
-            left: -10px;
-            width: 6px;
-            height: 6px;
-            border-radius: 5px;
-            background-color: #a8b2c1;
-            animation: dot-flashing 1s infinite alternate;
-            animation-delay: 0s;
-        }
-        .dot-flashing::after {
-            left: 10px;
-            width: 6px;
-            height: 6px;
-            border-radius: 5px;
-            background-color: #a8b2c1;
-            animation: dot-flashing 1s infinite alternate;
-            animation-delay: 1s;
-        }
-        @keyframes dot-flashing {
-            0% { background-color: #a8b2c1; }
-            50%, 100% { background-color: rgba(168, 178, 193, 0.2); }
-        }
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&display=swap');
 
-        /* Smooth transitions for sidebar */
-        .sidebar-transition {
-            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
+    .custom-scrollbar::-webkit-scrollbar { width: 8px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(155, 114, 203, 0.2); border-radius: 99px; }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(155, 114, 203, 0.4); }
 
-        /* Rainbow premium glow border */
-        @keyframes borderGlow {
-            0%, 100% { border-color: rgb(139, 92, 246); box-shadow: 0 0 8px rgba(139, 92, 246, 0.2); }
-            50% { border-color: rgb(236, 72, 153); box-shadow: 0 0 15px rgba(236, 72, 153, 0.4); }
-        }
-        .pro-glow-card {
-            animation: borderGlow 4s infinite ease-in-out;
-        }
-    </style>
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fade-in { animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+
+    /* Gemini Shimmer Text Animation */
+    .gemini-gradient-text {
+      background: linear-gradient(74deg, #4285f4 0%, #9b72cb 30%, #d96570 70%, #131314 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-size: 200% auto;
+      animation: textShine 6s ease infinite;
+    }
+    .dark .gemini-gradient-text {
+      background: linear-gradient(74deg, #9bbcf4 0%, #caadff 30%, #ffabb6 70%, #ffffff 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-size: 200% auto;
+      animation: textShine 6s ease infinite;
+    }
+
+    @keyframes textShine {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    /* Style markdown nodes elegantly */
+    .markdown-content p { margin-bottom: 0.75rem; line-height: 1.625; }
+    .markdown-content p:last-child { margin-bottom: 0; }
+    .markdown-content ul, .markdown-content ol { margin-left: 1.5rem; margin-bottom: 1rem; list-style-type: disc; }
+    .markdown-content ol { list-style-type: decimal; }
+    .markdown-content li { margin-bottom: 0.35rem; }
+    .markdown-content strong { font-weight: 600; color: inherit; }
+    .markdown-content h1, .markdown-content h2, .markdown-content h3 { font-weight: 700; margin-top: 1.25rem; margin-bottom: 0.5rem; }
+    .markdown-content h1 { font-size: 1.5rem; }
+    .markdown-content h2 { font-size: 1.25rem; }
+    .markdown-content h3 { font-size: 1.1rem; }
+    
+    /* Code Blocks */
+    .markdown-content pre {
+      background: #1e1f20;
+      color: #f3f4f6;
+      padding: 1rem;
+      border-radius: 1rem;
+      margin: 1rem 0;
+      overflow-x: auto;
+      font-family: 'Fira Code', 'Courier New', monospace;
+      font-size: 0.875rem;
+      border: 1px solid rgba(255,255,255,0.08);
+      position: relative;
+    }
+    .light .markdown-content pre {
+      background: #f8f9fa;
+      color: #1f2937;
+      border: 1px solid rgba(0,0,0,0.06);
+    }
+    .markdown-content code {
+      font-family: 'Fira Code', 'Courier New', monospace;
+      font-size: 0.9em;
+      background: rgba(155, 114, 203, 0.1);
+      padding: 0.15rem 0.35rem;
+      border-radius: 0.25rem;
+    }
+    .markdown-content pre code {
+      background: transparent;
+      padding: 0;
+      border-radius: 0;
+    }
+
+    /* AI Typing Pulse */
+    .gemini-loading-spark {
+      background: linear-gradient(to right, #4285f4, #9b72cb, #d96570);
+      background-size: 200% auto;
+      animation: textShine 2s linear infinite;
+    }
+  </style>
 </head>
-<body class="text-gray-200 h-screen flex overflow-hidden antialiased">
+<body class="bg-gemini-lightBg dark:bg-gemini-darkBg text-slate-800 dark:text-zinc-200 transition-colors duration-300 h-screen flex flex-col font-sans selection:bg-indigo-500/30 overflow-hidden">
 
-    <!-- Left Navigation Sidebar -->
-    <aside id="sidebar" class="w-72 bg-[#1e1f20] border-r border-[#303134] flex flex-col z-20 sidebar-transition fixed md:static inset-y-0 left-0 transform -translate-x-full md:translate-x-0">
-        <!-- Sidebar Header -->
-        <div class="h-16 flex items-center justify-between px-4 border-b border-[#303134] md:border-transparent">
-            <button id="close-sidebar-btn" class="p-2 text-gray-400 hover:text-white rounded-full hover:bg-[#2a2b2d] md:hidden">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
-            </button>
-            <span class="text-lg font-medium tracking-tight bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent font-bold">Nexus Menu</span>
-        </div>
-
-        <!-- Start New Chat Action -->
-        <div class="px-3.5 py-4">
-            <button id="new-chat-btn" class="w-full flex items-center gap-3 px-4 py-3 bg-[#131314] hover:bg-[#2a2b2d] border border-[#303134] rounded-full text-sm font-medium text-gray-300 hover:text-white transition-all">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5 text-indigo-400"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
-                <span>New chat</span>
-            </button>
-        </div>
-
-        <!-- PWA / Native Windows Installation Center -->
-        <div class="px-3.5 pb-4 space-y-2">
-            <!-- PWA Standard (Chrome/Edge Engine) -->
-            <button id="install-app-btn" class="hidden w-full flex items-center gap-3 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 border border-indigo-500 rounded-xl text-xs font-semibold text-white transition-all shadow-md">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" /></svg>
-                <span>Install Standalone App</span>
-            </button>
-
-            <!-- Native Windows Shortcut Compiler (Works 100% of the time on Windows) -->
-            <div>
-                <button id="generate-win-shortcut-btn" class="w-full flex items-center gap-3 px-4 py-2.5 bg-gradient-to-r from-blue-600/20 to-indigo-600/20 hover:from-blue-600/30 hover:to-indigo-600/30 border border-indigo-500/30 rounded-xl text-xs font-semibold text-indigo-200 transition-all">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4 text-indigo-400"><path stroke-linecap="round" stroke-linejoin="round" d="M9 17.25v1.007a3 3 0 0 1-.879 2.122L7.5 21h9l-.621-.621A3 3 0 0 1 15 18.257V17.25m6-12V15a2.25 2.25 0 0 1-2.25 2.25H5.25A2.25 2.25 0 0 1 3 15V5.25m18 0A2.25 2.25 0 0 0 18.75 3H5.25A2.25 2.25 0 0 0 3 5.25m18 0V12a2.25 2.25 0 0 1-2.25 2.25H5.25A2.25 2.25 0 0 1 3 12V5.25" /></svg>
-                    <span>Compile Windows App</span>
-                </button>
-                <p class="text-[9px] text-gray-500 mt-1.5 px-1 leading-tight text-center">Windows may flag the compiler. Click <b>More info</b> → <b>Run anyway</b> to allow.</p>
-            </div>
-        </div>
-
-        <!-- Saved Chats List -->
-        <div class="flex-1 overflow-y-auto px-2 space-y-1">
-            <div class="px-3.5 text-xs font-semibold text-gray-500 tracking-wider uppercase mb-2">Recent Chats</div>
-            <div id="chats-list-container" class="space-y-0.5">
-                <div class="text-xs text-gray-500 px-4 py-2 italic">Loading save states...</div>
-            </div>
-        </div>
-
-        <!-- Active Engine Profile Card -->
-        <div class="p-4 mx-2 mb-2 border border-[#303134] rounded-xl bg-[#131314] text-xs">
-            <p class="text-gray-400 font-semibold mb-1">Active Model:</p>
-            <p id="active-model-sidebar" class="text-indigo-400 font-mono truncate">Not Loaded</p>
-            <div class="mt-2 flex items-center gap-1.5 text-[11px] text-gray-500">
-                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                <span>Optimized Cache Controller</span>
-            </div>
-        </div>
-
-        <!-- User profile details & Session indicator -->
-        <div class="p-4 border-t border-[#303134] bg-[#1a1b1c] text-xs text-gray-400 flex items-center gap-3">
-            <div class="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-white font-bold text-sm">U</div>
-            <div class="flex-1 min-w-0">
-                <p class="font-medium text-gray-300 truncate" id="user-id-display">Local Offline User</p>
-                <p class="text-[10px] text-gray-500">IndexedDB Storage Active</p>
-            </div>
-        </div>
-    </aside>
-
-    <!-- Overlay for mobile menu drawer -->
-    <div id="sidebar-overlay" class="fixed inset-0 bg-black/60 z-10 hidden md:hidden"></div>
-
-    <!-- Main Workspace Frame -->
-    <div class="flex-1 flex flex-col h-screen overflow-hidden relative">
-
-        <!-- Top Navbar -->
-        <header class="h-16 flex items-center justify-between px-4 md:px-6 z-10 bg-[#131314] border-b border-[#202124]">
-            <div class="flex items-center gap-3">
-                <button id="menu-toggle-btn" class="p-2 text-gray-400 hover:text-white rounded-full hover:bg-[#2a2b2d]">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" /></svg>
-                </button>
-                <span id="header-brand" class="text-xl font-medium tracking-tight bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-500 bg-clip-text text-transparent font-semibold">Nexus AI</span>
-            </div>
-            <div class="flex items-center gap-4">
-                <span id="speed-indicator" class="text-xs text-gray-500 hidden sm:block">Awaiting Selection...</span>
-                <div class="w-8 h-8 rounded-full bg-[#3c4043] flex items-center justify-center text-sm font-semibold text-white">
-                    U
-                </div>
-            </div>
-        </header>
-
-        <!-- Main Workspace Viewport -->
-        <main class="flex-1 relative overflow-hidden flex flex-col items-center">
-            
-            <!-- Model Selection & Boot Screen -->
-            <div id="loading-screen" class="absolute inset-0 bg-[#0f1114] z-30 flex flex-col items-center justify-center p-6 transition-all duration-700 overflow-y-auto">
-                <div class="max-w-4xl w-full text-center py-6">
-                    <div class="w-16 h-16 mx-auto mb-6 text-indigo-400 status-glow">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-full h-full">
-                            <path d="M11.645 20.91l-.007-.003-.003-.001a1.99 1.99 0 01-.194-.124c-.201-.15-.46-.395-.717-.745-.515-.7-1.002-1.748-1.344-3.085a11.91 11.91 0 01-.334-1.745l-.014-.114-.114-.014a11.91 11.91 0 01-1.745-.334c-1.337-.342-2.385-.829-3.085-1.344-.35-.257-.594-.516-.745-.717a1.99 1.99 0 01-.125-.194L3.1 12.35l.001-.003.003-.007a2.078 2.078 0 01.353-.45c.29-.272.71-.588 1.258-.92 1.096-.665 2.585-1.348 4.298-1.638l.142-.024.024-.142c.29-1.713.973-3.202 1.638-4.298.332-.548.648-.967.92-1.258a2.078 2.078 0 01.453-.353l.006-.003.004-.001a1.99 1.99 0 01.194.124c.201.15.46.395.717.745.515.7 1.002 1.748 1.344 3.085.122.48.234.962.334 1.745l.014.114.114.014c.783.1 1.265.212 1.745.334 1.337.342 2.385.829 3.085 1.344.35.257.594.516.745.717.043.058.086.124.125.194l.007.003.003.001a2.078 2.078 0 01-.353.45c-.29.272-.71.588-1.258.92-1.096.665-2.585 1.348-4.298 1.638l-.142.024-.024.142c-.29 1.713-.973 3.202-1.638 4.298-.332.548-.648.967-.92 1.258a2.078 2.078 0 01-.453.353z" />
-                        </svg>
-                    </div>
-                    <h2 class="text-3xl font-medium tracking-tight mb-2">Initialize Nexus Offline Engine</h2>
-                    <p class="text-gray-400 text-sm mb-8 leading-relaxed">Choose an AI engine to deploy locally. Larger models provide better reasoning but take longer to load and require more RAM.</p>
-                    
-                    <!-- Choice Interface -->
-                    <div id="choice-panel" class="grid grid-cols-1 md:grid-cols-3 gap-4 text-left mb-6">
-                        <!-- Ultra-Lite Choice -->
-                        <div onclick="selectAndBoot('onnx-community/SmolLM2-135M-Instruct')" class="border border-[#303134] bg-[#18191a] hover:bg-[#252627] hover:border-indigo-400/50 p-5 rounded-2xl cursor-pointer transition-all group">
-                            <h3 class="font-bold text-gray-200 group-hover:text-white">Ultra-Lite</h3>
-                            <p class="text-[11px] text-indigo-400 font-mono mt-0.5">SmolLM2-135M (~90MB)</p>
-                            <p class="text-xs text-gray-400 mt-2.5 leading-relaxed">Runs blisteringly fast on any device. Recommended for Chromebooks or systems with under 4GB of RAM.</p>
-                        </div>
-
-                        <!-- Balanced Choice -->
-                        <div onclick="selectAndBoot('onnx-community/Qwen2.5-0.5B-Instruct')" class="border border-[#303134] bg-[#18191a] hover:bg-[#252627] hover:border-indigo-400/50 p-5 rounded-2xl cursor-pointer transition-all group">
-                            <h3 class="font-bold text-gray-200 group-hover:text-white">Balanced</h3>
-                            <p class="text-[11px] text-gray-400 font-mono mt-0.5">Qwen2.5-0.5B (~260MB)</p>
-                            <p class="text-xs text-gray-400 mt-2.5 leading-relaxed">The ideal middle-ground. Reliable speed and improved command compliance. Recommended for 4GB-8GB systems.</p>
-                        </div>
-
-                        <!-- Premium Pro Choice -->
-                        <div onclick="selectAndBoot('onnx-community/Qwen2.5-1.5B-Instruct')" class="border-2 pro-glow-card bg-[#1a1429]/50 hover:bg-[#201736]/60 p-5 rounded-2xl cursor-pointer transition-all group relative">
-                            <span class="absolute -top-3 left-4 bg-gradient-to-r from-purple-500 to-pink-500 text-[9px] font-bold uppercase tracking-widest px-2.5 py-0.5 rounded-full shadow">Pro Level</span>
-                            <h3 class="font-bold text-purple-100 group-hover:text-white">Pro Engine</h3>
-                            <p class="text-[11px] text-pink-400 font-mono mt-0.5">Qwen2.5-1.5B (~950MB)</p>
-                            <p class="text-xs text-purple-200/80 mt-2.5 leading-relaxed">The absolute best in-browser model. Excellent coding, reasoning, and direct text synthesis. Needs modern desktop hardware or 8GB+ RAM.</p>
-                        </div>
-                    </div>
-
-                    <!-- Boot Progress (Hidden at start) -->
-                    <div id="progress-panel" class="hidden text-center max-w-md mx-auto mt-6">
-                        <div class="w-full bg-[#1e1f20] rounded-full h-2 mb-3 overflow-hidden border border-[#303134]">
-                            <div id="progress-bar" class="bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-600 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
-                        </div>
-                        <p id="progress-text" class="text-xs font-mono text-gray-500 mb-6 font-semibold">Awaiting selection...</p>
-                        
-                        <!-- Manual Troubleshooting Action (Shown when slow or blocked) -->
-                        <div id="troubleshoot-btn-container" class="hidden mt-4">
-                            <button onclick="window.location.reload()" class="px-4 py-2 bg-[#2a2b2d] hover:bg-red-950/40 border border-[#444] text-xs font-semibold rounded-lg transition-all text-gray-300 hover:text-red-400">
-                                Stuck? Click to Reload Page
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="text-[11px] text-gray-500 mt-6">
-                        *Models are safely stored in your browser's private Cache API workspace once loaded.
-                    </div>
-                </div>
-            </div>
-
-            <!-- Chat Frame -->
-            <div id="chat-frame" class="w-full max-w-4xl flex-1 flex flex-col justify-between overflow-hidden relative px-4 md:px-6">
-                
-                <!-- Empty state (Initial screen) -->
-                <div id="welcome-container" class="flex-1 flex flex-col justify-center items-center py-12 select-none overflow-y-auto">
-                    <div class="text-center max-w-2xl mb-8">
-                        <h1 class="text-5xl font-medium tracking-tight mb-4 leading-tight">
-                            <span class="bg-gradient-to-r from-blue-400 via-purple-400 to-pink-500 bg-clip-text text-transparent font-bold">Hello, I'm Nexus</span>
-                        </h1>
-                        <p id="welcome-model-subtitle" class="text-gray-400 text-lg">Optimized low-RAM local workspace active.</p>
-                    </div>
-
-                    <!-- Idea Cards Grid -->
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full max-w-3xl px-4">
-                        <div onclick="fillAndSend('Explain the theory of relativity in one simple sentence.')" class="bg-[#1e1f20] hover:bg-[#2a2b2d] border border-[#303134] rounded-2xl p-5 cursor-pointer transition-all duration-200 group flex flex-col justify-between h-32">
-                            <p class="text-sm text-gray-300 leading-relaxed group-hover:text-white">Explain relativity in one simple sentence</p>
-                            <div class="self-end p-2 bg-[#131314] rounded-full text-indigo-400 border border-[#303134]">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" d="M12 18.75a6 6 0 0 0 6-6v-1.5m-6 7.5a6 6 0 0 1-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 0 1-3-3V4.5a3 3 0 1 1 6 0v8.25a3 3 0 0 1-3 3Z"/></svg>
-                            </div>
-                        </div>
-                        <div onclick="fillAndSend('Draft a highly concise pitch for a local web-browsing AI assistant.')" class="bg-[#1e1f20] hover:bg-[#2a2b2d] border border-[#303134] rounded-2xl p-5 cursor-pointer transition-all duration-200 group flex flex-col justify-between h-32">
-                            <p class="text-sm text-gray-300 leading-relaxed group-hover:text-white">Write a quick elevator pitch for an offline AI app</p>
-                            <div class="self-end p-2 bg-[#131314] rounded-full text-indigo-400 border border-[#303134]">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" /></svg>
-                            </div>
-                        </div>
-                        <div onclick="fillAndSend('What is the fast inverse square root constant and its magic value?')" class="bg-[#1e1f20] hover:bg-[#2a2b2d] border border-[#303134] rounded-2xl p-5 cursor-pointer transition-all duration-200 group flex flex-col justify-between h-32">
-                            <p class="text-sm text-gray-300 leading-relaxed group-hover:text-white">Describe the fast inverse square root magic constant</p>
-                            <div class="self-end p-2 bg-[#131314] rounded-full text-indigo-400 border border-[#303134]">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" d="M17.25 6.75 22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3-4.5 16.5" /></svg>
-                            </div>
-                        </div>
-                        <div onclick="fillAndSend('Who was Alan Turing? Keep it to one short sentence.')" class="bg-[#1e1f20] hover:bg-[#2a2b2d] border border-[#303134] rounded-2xl p-5 cursor-pointer transition-all duration-200 group flex flex-col justify-between h-32">
-                            <p class="text-sm text-gray-300 leading-relaxed group-hover:text-white">Who was Alan Turing? (Concise summary)</p>
-                            <div class="self-end p-2 bg-[#131314] rounded-full text-indigo-400 border border-[#303134]">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" /></svg>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Active Chat History Area -->
-                <div id="chat-container" class="flex-1 overflow-y-auto py-4 hidden">
-                    <!-- Messages dynamically generated -->
-                </div>
-
-                <!-- Floating Input Area -->
-                <div class="py-4 bg-gradient-to-t from-[#131314] via-[#131314] to-transparent sticky bottom-0">
-                    <div class="relative max-w-3xl mx-auto w-full flex flex-col">
-                        <div class="flex items-center bg-[#1e1f20] rounded-full px-6 py-2 border border-[#303134] shadow-2xl focus-within:border-gray-500 transition-all">
-                            <input 
-                                type="text" 
-                                id="user-input" 
-                                placeholder="Engine loaded. Ask Nexus..." 
-                                class="flex-1 bg-transparent border-0 outline-none text-gray-100 py-3 text-[15px] placeholder-gray-500"
-                                autocomplete="off"
-                                disabled
-                            >
-                            <button 
-                                id="send-btn" 
-                                class="p-2.5 text-indigo-400 hover:text-white disabled:opacity-30 disabled:hover:text-indigo-400 transition-colors rounded-full hover:bg-[#2a2b2d]"
-                                disabled
-                            >
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5">
-                                    <path d="M3.478 2.405a.75.75 0 00-.926.94l2.432 7.905H13.5a.75.75 0 010 1.5H4.984l-2.432 7.905a.75.75 0 00.926.94 60.519 60.519 0 0018.445-8.986.75.75 0 000-1.218A60.517 60.517 0 003.478 2.405z" />
-                                </svg>
-                            </button>
-                        </div>
-                        <span class="text-[10px] text-gray-500 text-center mt-2 tracking-wide">
-                            Optimizations active: Sliding Context Window (reduces memory consumption over long sessions).
-                        </span>
-                    </div>
-                </div>
-
-            </div>
-        </main>
+  <!-- Header -->
+  <header class="flex-none bg-transparent p-4 sm:px-6 z-10 flex items-center justify-between">
+    <div class="flex items-center gap-2.5">
+      <!-- Gemini Sparkle Gradient Logo -->
+      <div class="relative w-8 h-8 flex items-center justify-center">
+        <i class="ph-fill ph-sparkle text-2xl bg-gradient-to-tr from-[#4285f4] via-[#9b72cb] to-[#d96570] bg-clip-text text-transparent animate-pulse"></i>
+      </div>
+      <div class="flex items-center gap-2">
+        <h1 class="font-medium text-lg text-slate-900 dark:text-white flex items-center gap-1.5">
+          Nexus AI
+          <span class="text-xs font-normal text-slate-500 dark:text-zinc-400 bg-slate-200/60 dark:bg-zinc-800 px-2 py-0.5 rounded-full">v2.5</span>
+        </h1>
+        <p id="ai-status" class="text-[10px] font-mono text-emerald-500 dark:text-emerald-400 flex items-center gap-1 bg-emerald-500/10 px-2 py-0.5 rounded-full">
+          Active
+        </p>
+      </div>
     </div>
+    
+    <div class="flex items-center gap-3">
+      <!-- Model Dropdown -->
+      <div class="hidden sm:flex items-center gap-1 text-xs text-slate-600 dark:text-zinc-400 font-medium px-3 py-1.5 rounded-full bg-slate-200/40 dark:bg-zinc-800/60">
+        <span>Nexus 2.5 Flash</span>
+        <i class="ph ph-caret-down text-[10px]"></i>
+      </div>
+      <!-- Theme Switcher -->
+      <button id="theme-toggle" class="p-2.5 rounded-full hover:bg-slate-200/50 dark:hover:bg-zinc-800/50 transition-colors text-slate-600 dark:text-zinc-300">
+        <i class="ph-bold ph-moon text-lg dark:hidden"></i>
+        <i class="ph-bold ph-sun text-lg hidden dark:block"></i>
+      </button>
+    </div>
+  </header>
 
-    <!-- Local Offline Script (IndexedDB Persistence) -->
-    <script type="module">
-        // --- PWA Setup ---
-        const manifestJSON = {
-            name: "Nexus AI",
-            short_name: "Nexus",
-            display: "standalone",
-            start_url: window.location.href.split('#')[0],
-            background_color: "#131314",
-            theme_color: "#131314",
-            icons: [{
-                src: "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iIzgxOGNmOCI+PHBhdGggZD0iTTExLjY0NSAyMC45MWwtLjAwNy0uMDAzLS4wMDMtLjAwMWExLjk5IDEuOTkgMCAwMS0uMTk0LS4xMjRjLS4yMDEtLjE1LS40Ni0uMzk1LS43MTctLjc0NS0uNTE1LS43LTEuMDAyLTEuNzQ4LTEuMzQ0LTMuMDg1YTExLjkxIDExLjkxIDAgMDEtLjMzNC0xLjc0NWwtLjAxNC0uMTE0LS4xMTQtLjAxNGExMS45MSAxMS45MSAwIDAxLTEuNzQ1LS4zMzRjLTEuMzM3LS4zNDItMi4zODUtLjgyOS0zLjA4NS0xLjM0NC0uMzUtLjI1Ny0uNTk0LS41MTYtLjc0NS0uNzE3YTEuOTkgMS45OSAwIDAxLS4xMjUtLjE5NEwzLjEgMTIuMzVsLjAwMS0uMDAzLjAwMy0uMDA3YTIuMDc4IDIuMDc4IDAgMDEuMzUzLS40NWMuMjktLjI3Mi43MS0uNTg4IDEuMjU4LS45MiAxLjA5Ni0uNjY1IDIuNTg1LTEuMzQ4IDQuMjk4LTEuNjM4bC4xNDItLjAyNC4wMjQtLjE0MmMuMjktMS43MTMuOTczLTMuMjAyIDEuNjM4LTQuMjk4LjMzMi0uNTQ4LjY0OC0uOTY3LjkyLTEuMjU4YTIuMDc4IDIuMDc4IDAgMDEuNDUzLS4zNTNsLjAwNi0uMDAzLjAwNC0uMDAxYTEuOTkgMS45OSAwIDAxLjE5NC4xMjRjLjIwMS4xNS40Ni4zOTUuNzE3Ljc0NS41MTUuNyAxLjAwMiAxLjc0OCAxLjM0NCAzLjA4NS4xMjIuNDguMjM0Ljk2Mi4zMzQgMS43NDVsLjAxNC4xMTQuMTE0LjAxNGMuNzgzLjEgMS4yNjUuMjEyIDEuNzQ1LjMzNCAxLjMzNy4zNDIgMi4zODUuODI5IDMuMDg1IDEuMzQ0LjM1LjI1Ny41OTQuNTE2Ljc0NS43MTcuMDQzLjA1OC4wODYuMTI0LjEyNS4xOTRsLjAwNy4wMDMuMDAzLjAwMWEyLjA3OCAyLjA3OCAwIDAxLS4zNTMuNDVjLS4yOS4yNzItLjcxLjU4OC0xLjI1OC45Mi0xLjA5Ni42NjUtMi41ODUgMS4zNDgtNC4yOTggMS42MzhsLS4xNDIuMDI0LS4wMjQuMTQyYy0uMjkgMS43MTMtLjk3MyAzLjIwMi0xLjYzOCA0LjI5OC0uMzMyLjU0OC0uNjQ4Ljk2Ny0uOTIgMS4yNThhMi4wNzggMi4wNzggMCAwMS0uNDUzLjM1M3oiIC8+PC9zdmc+",
-                sizes: "192x192",
-                type: "image/svg+xml"
-            }]
-        };
-        document.getElementById('manifest-link').href = 'data:application/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(manifestJSON));
-
-        // Register Inline Service Worker for Offline Engine capability
-        if ('serviceWorker' in navigator) {
-            const swCode = `
-                self.addEventListener('install', (e) => self.skipWaiting());
-                self.addEventListener('activate', (e) => self.clients.claim());
-                self.addEventListener('fetch', (e) => {
-                    // Transparent service worker caching for offline standalone execution
-                    e.respondWith(
-                        fetch(e.request).catch(() => caches.match(e.request))
-                    );
-                });
-            `;
-            const blob = new Blob([swCode], { type: 'application/javascript' });
-            navigator.serviceWorker.register(URL.createObjectURL(blob)).catch((err) => {
-                console.warn("ServiceWorker registration skipped inside sandbox iframe.", err);
-            });
-        }
-
-        // PWA standard installation trigger
-        let deferredPrompt;
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            deferredPrompt = e;
-            document.getElementById('install-app-btn').classList.remove('hidden');
-        });
-
-        document.getElementById('install-app-btn')?.addEventListener('click', async () => {
-            if (deferredPrompt) {
-                deferredPrompt.prompt();
-                const { outcome } = await deferredPrompt.userChoice;
-                if (outcome === 'accepted') {
-                    document.getElementById('install-app-btn').classList.add('hidden');
-                }
-                deferredPrompt = null;
-            }
-        });
-
-        // ==========================================
-        //  COMPLY WITH BULLETPROOF WINDOWS INSTALLER
-        // ==========================================
-        document.getElementById('generate-win-shortcut-btn').addEventListener('click', () => {
-            const appUrl = window.location.href.split('#')[0];
-            
-            // This is a highly specialized batch script that cleanly generates an Edge App shortcut.
-            // Edge's "--app=" flag forces the page to load in a modern, borderless window layout 
-            // without tabs or url-bars, exactly resembling a native C#/.NET compiled application!
-            const batchScript = `@echo off
-title Nexus AI Desktop Installer
-echo =========================================================
-echo   Deploying Nexus AI to Windows Desktop Frame...
-echo =========================================================
-echo.
-
-set SCRIPT="%TEMP%\\nexus-shortcut-compiler.vbs"
-echo Set oWS = WScript.CreateObject("WScript.Shell") > %SCRIPT%
-echo sLinkFile = "%USERPROFILE%\\Desktop\\Nexus AI.lnk" >> %SCRIPT%
-echo Set oLink = oWS.CreateShortcut(sLinkFile) >> %SCRIPT%
-echo oLink.TargetPath = "msedge.exe" >> %SCRIPT%
-echo oLink.Arguments = "--app=${appUrl}" >> %SCRIPT%
-echo oLink.Description = "Nexus AI Local Agent" >> %SCRIPT%
-echo oLink.IconLocation = "msedge.exe,0" >> %SCRIPT%
-echo oLink.Save >> %SCRIPT%
-
-cscript /nologo %SCRIPT%
-del %SCRIPT%
-
-echo.
-echo =========================================================
-echo   Nexus AI successfully compiled as a Standalone App!
-echo   Launching application now...
-echo =========================================================
-
-start msedge.exe --app="${appUrl}"
-timeout /t 3 >nul
-exit
-`;
-            
-            const blob = new Blob([batchScript], { type: 'text/plain;charset=utf-8' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'install_nexus_desktop.bat';
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-        });
-
-        // DOM Elements
-        const chatContainer = document.getElementById('chat-container');
-        const welcomeContainer = document.getElementById('welcome-container');
-        const userInput = document.getElementById('user-input');
-        const sendBtn = document.getElementById('send-btn');
-        const loadingScreen = document.getElementById('loading-screen');
-        const choicePanel = document.getElementById('choice-panel');
-        const progressPanel = document.getElementById('progress-panel');
-        const progressBar = document.getElementById('progress-bar');
-        const progressText = document.getElementById('progress-text');
-        const speedIndicator = document.getElementById('speed-indicator');
-        const activeModelSidebar = document.getElementById('active-model-sidebar');
-        const troubleshootContainer = document.getElementById('troubleshoot-btn-container');
-
-        const sidebar = document.getElementById('sidebar');
-        const sidebarOverlay = document.getElementById('sidebar-overlay');
-        const menuToggleBtn = document.getElementById('menu-toggle-btn');
-        const closeSidebarBtn = document.getElementById('close-sidebar-btn');
-        const newChatBtn = document.getElementById('new-chat-btn');
-        const chatsListContainer = document.getElementById('chats-list-container');
-
-        // State Machine
-        let isGenerating = false;
-        let currentTypingBubble = null;
-        let activeChatId = null; 
-        let selectedModelPath = ''; 
-        let errorHasOccurred = false;
-
-        // Factual, highly-curated instructions that minimize vocabulary usage (saves generation RAM)
-        const SYSTEM_INSTRUCTIONS = "You are Nexus AI, a factual assistant. Answer directly and cleanly. Keep responses short. No emojis.";
+  <!-- Main Chat Container -->
+  <main class="flex-1 overflow-hidden flex flex-col items-center justify-center relative w-full max-w-4xl mx-auto px-4 sm:px-6">
+    <div id="chat-scroller" class="w-full flex-1 overflow-y-auto custom-scrollbar pb-32">
+      <div id="chat-history" class="space-y-8 py-6">
         
-        let chatHistory = [
-            { role: "system", content: SYSTEM_INSTRUCTIONS }
-        ];
+        <!-- INITIAL EMPTY STATE (Gemini Welcomer) -->
+        <div id="empty-state" class="py-12 sm:py-20 flex flex-col items-start justify-center max-w-2xl mx-auto space-y-8 animate-fade-in">
+          <div>
+            <h2 class="text-4xl sm:text-5xl font-medium tracking-tight mb-2">
+              <span class="gemini-gradient-text font-bold">Hello, Friend</span>
+            </h2>
+            <p class="text-xl sm:text-2xl text-slate-500 dark:text-zinc-400 font-medium leading-relaxed">How can I help you discover or build today?</p>
+          </div>
 
-        // Ensure global access for simple interactions (like idea cards clicking)
-        window.fillAndSend = function(text) {
-            userInput.value = text;
-            handleSend();
-        };
+          <!-- Suggestion Cards Grid -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full">
+            <div data-click="fillSuggestion" data-arg="Help me write a professional email requesting project extension" class="group p-5 rounded-2xl bg-white hover:bg-slate-100 dark:bg-gemini-darkCard dark:hover:bg-zinc-800/80 border border-slate-200/60 dark:border-zinc-800 cursor-pointer shadow-sm hover:shadow transition-all">
+              <p class="text-sm font-medium mb-4 text-slate-700 dark:text-zinc-300">Help me draft an email requesting an extension...</p>
+              <div class="flex justify-end">
+                <div class="w-8 h-8 rounded-full bg-slate-100 dark:bg-zinc-700/50 group-hover:bg-indigo-100 dark:group-hover:bg-indigo-900/30 flex items-center justify-center transition-colors">
+                  <i class="ph ph-pencil-line text-slate-500 dark:text-zinc-400 group-hover:text-indigo-500"></i>
+                </div>
+              </div>
+            </div>
 
-        // UI Helpers
-        function toggleSidebar() {
-            sidebar.classList.toggle('-translate-x-full');
-            sidebarOverlay.classList.toggle('hidden');
-        }
+            <div data-click="fillSuggestion" data-arg="Explain quantum computing in simple, easy to understand terms" class="group p-5 rounded-2xl bg-white hover:bg-slate-100 dark:bg-gemini-darkCard dark:hover:bg-zinc-800/80 border border-slate-200/60 dark:border-zinc-800 cursor-pointer shadow-sm hover:shadow transition-all">
+              <p class="text-sm font-medium mb-4 text-slate-700 dark:text-zinc-300">Explain quantum computing in simple terms...</p>
+              <div class="flex justify-end">
+                <div class="w-8 h-8 rounded-full bg-slate-100 dark:bg-zinc-700/50 group-hover:bg-[#4285f4]/10 flex items-center justify-center transition-colors">
+                  <i class="ph ph-lightbulb text-slate-500 dark:text-zinc-400 group-hover:text-[#4285f4]"></i>
+                </div>
+              </div>
+            </div>
 
-        menuToggleBtn.addEventListener('click', toggleSidebar);
-        closeSidebarBtn.addEventListener('click', toggleSidebar);
-        sidebarOverlay.addEventListener('click', toggleSidebar);
+            <div data-click="fillSuggestion" data-arg="Give me some unique gift ideas for a software developer colleague" class="group p-5 rounded-2xl bg-white hover:bg-slate-100 dark:bg-gemini-darkCard dark:hover:bg-zinc-800/80 border border-slate-200/60 dark:border-zinc-800 cursor-pointer shadow-sm hover:shadow transition-all">
+              <p class="text-sm font-medium mb-4 text-slate-700 dark:text-zinc-300">Brainstorm creative gift ideas for a developer...</p>
+              <div class="flex justify-end">
+                <div class="w-8 h-8 rounded-full bg-slate-100 dark:bg-zinc-700/50 group-hover:bg-[#d96570]/10 flex items-center justify-center transition-colors">
+                  <i class="ph ph-gift text-slate-500 dark:text-zinc-400 group-hover:text-[#d96570]"></i>
+                </div>
+              </div>
+            </div>
 
-        // Starts a brand new conversation state in-memory and UI
-        function createNewChat() {
-            activeChatId = null;
-            chatHistory = [{ role: "system", content: SYSTEM_INSTRUCTIONS }];
-            
-            chatContainer.innerHTML = '';
-            chatContainer.classList.add('hidden');
-            welcomeContainer.style.display = 'flex';
-            userInput.value = '';
-            userInput.focus();
+            <div data-click="fillSuggestion" data-arg="Write a Python script to scrape pricing data from a website" class="group p-5 rounded-2xl bg-white hover:bg-slate-100 dark:bg-gemini-darkCard dark:hover:bg-zinc-800/80 border border-slate-200/60 dark:border-zinc-800 cursor-pointer shadow-sm hover:shadow transition-all">
+              <p class="text-sm font-medium mb-4 text-slate-700 dark:text-zinc-300">Generate a Python script to scrape pricing data...</p>
+              <div class="flex justify-end">
+                <div class="w-8 h-8 rounded-full bg-slate-100 dark:bg-zinc-700/50 group-hover:bg-[#9b72cb]/10 flex items-center justify-center transition-colors">
+                  <i class="ph ph-code text-slate-500 dark:text-zinc-400 group-hover:text-[#9b72cb]"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
 
-            highlightActiveChat(null);
+      </div>
+    </div>
+  </main>
 
-            if (!sidebar.classList.contains('-translate-x-full')) {
-                toggleSidebar();
-            }
-        }
+  <!-- Input Container -->
+  <footer class="absolute bottom-0 inset-x-0 bg-gradient-to-t from-gemini-lightBg via-gemini-lightBg/95 to-transparent dark:from-gemini-darkBg dark:via-gemini-darkBg/95 pb-6 pt-10 px-4 sm:px-6 z-20 flex justify-center">
+    <div class="w-full max-w-3xl relative">
+      <form id="chat-form" class="relative flex items-center bg-white dark:bg-gemini-darkCard border border-slate-200/80 dark:border-zinc-800 rounded-full shadow-[0_4px_30px_rgba(0,0,0,0.04)] dark:shadow-[0_12px_40px_rgba(0,0,0,0.3)] transition-all overflow-hidden focus-within:ring-2 focus-within:ring-indigo-500/20 focus-within:border-slate-300 dark:focus-within:border-zinc-700 pr-2 pl-4 sm:pl-6">
+        
+        <button type="button" class="flex-none p-2 text-slate-400 hover:text-slate-600 dark:text-zinc-500 dark:hover:text-zinc-300 transition-colors" title="Upload Image (Simulated)">
+          <i class="ph ph-image text-xl sm:text-2xl"></i>
+        </button>
 
-        newChatBtn.addEventListener('click', createNewChat);
+        <input type="text" id="chat-input" placeholder="Ask Nexus AI..." autocomplete="off" class="flex-1 bg-transparent py-4 px-2 sm:px-3 text-base text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-zinc-500 outline-none w-full min-w-0">
+        
+        <button type="submit" id="chat-submit" class="flex-none bg-slate-100 hover:bg-slate-200 text-slate-400 hover:text-slate-900 dark:bg-zinc-800 dark:hover:bg-zinc-700 dark:text-zinc-400 dark:hover:text-white w-10 sm:w-11 h-10 sm:h-11 rounded-full font-bold transition-all flex items-center justify-center active:scale-95 disabled:opacity-50 disabled:pointer-events-none disabled:active:scale-100">
+          <i class="ph-bold ph-paper-plane-right text-base sm:text-lg"></i>
+        </button>
+      </form>
+      <div class="text-center mt-3">
+        <span class="text-[10px] sm:text-xs text-slate-400 dark:text-zinc-500 font-medium">Nexus AI may display inaccurate info, including about people, so double-check its responses.</span>
+      </div>
+    </div>
+  </footer>
 
-        // --- IndexedDB Offline Storage Setup ---
-        let db;
-        const initDB = () => {
-            return new Promise((resolve, reject) => {
-                const request = indexedDB.open("NexusOfflineDB", 1);
-                request.onupgradeneeded = (event) => {
-                    db = event.target.result;
-                    if (!db.objectStoreNames.contains('chats')) {
-                        db.createObjectStore('chats', { keyPath: 'id' });
-                    }
-                };
-                request.onsuccess = (event) => {
-                    db = event.target.result;
-                    resolve();
-                };
-                request.onerror = (event) => {
-                    console.error("IndexedDB error:", event.target.error);
-                    reject(event.target.error);
-                };
-            });
-        };
+  <!-- Logic Script -->
+  <script>
+    // Theme Toggle Logic
+    const toggleBtn = document.getElementById('theme-toggle');
+    const htmlEl = document.documentElement;
+    
+    // Default to dark mode if not set
+    if (!localStorage.getItem('nexus_mode')) {
+      localStorage.setItem('nexus_mode', 'dark');
+      htmlEl.classList.add('dark');
+    } else if (localStorage.getItem('nexus_mode') === 'dark') {
+      htmlEl.classList.add('dark');
+    } else {
+      htmlEl.classList.remove('dark');
+    }
 
-        // Sync local chat state to IndexedDB Offline Storage
-        function saveChatToLocalDB() {
-            if (!db) return;
+    toggleBtn.addEventListener('click', () => {
+      if (htmlEl.classList.contains('dark')) {
+        htmlEl.classList.remove('dark');
+        localStorage.setItem('nexus_mode', 'light');
+      } else {
+        htmlEl.classList.add('dark');
+        localStorage.setItem('nexus_mode', 'dark');
+      }
+    });
 
-            const firstUserQuery = chatHistory.find(msg => msg.role === 'user')?.content || "New Conversation";
-            const cleanTitle = firstUserQuery.length > 28 ? firstUserQuery.substring(0, 25) + '...' : firstUserQuery;
+    // Chat State
+    let chatHistoryContext = [];
+    let currentTypingBubbleId = null;
+    let timerInterval = null;
+    let timerStart = 0;
 
-            if (!activeChatId) activeChatId = crypto.randomUUID();
+    const chatForm = document.getElementById('chat-form');
+    const chatInput = document.getElementById('chat-input');
+    const chatSubmit = document.getElementById('chat-submit');
+    const chatHistoryEl = document.getElementById('chat-history');
+    const chatScroller = document.getElementById('chat-scroller');
+    const emptyState = document.getElementById('empty-state');
 
-            const chatPayload = {
-                id: activeChatId,
-                title: cleanTitle,
-                updatedAt: Date.now(),
-                history: chatHistory 
-            };
+    // Utility to escape HTML to prevent XSS
+    const escapeHTML = (str) => {
+      return str.replace(/[&<>'"]/g, 
+        tag => ({
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            "'": '&#39;',
+            '"': '&quot;'
+        }[tag] || tag)
+      );
+    };
 
-            const transaction = db.transaction(['chats'], 'readwrite');
-            const store = transaction.objectStore('chats');
-            store.put(chatPayload);
+    // The AI Engine Object (Extracted directly from the store's code)
+    window.aiEngine = {
+        isProcessing: false,
+        queue: [],
+        
+        processQueue: async function() {
+            if (this.isProcessing || this.queue.length === 0) return;
+            this.isProcessing = true;
+            const task = this.queue.shift();
 
-            transaction.oncomplete = () => {
-                loadAllChats(); 
-            };
-        }
+            try {
+                let apiMessages = [
+                    { 
+                        role: "system", 
+                        content: "You are Nexus AI, a highly intelligent, comprehensive, creative and helpful assistant. Format your output elegantly in markdown. Make extensive use of bullet points, code snippets, lists, and headings to keep answers visually gorgeous." 
+                    },
+                    ...task.messages
+                ];
 
-        // Delete conversation handler
-        function deleteChatFromLocalDB(chatId, event) {
-            event.stopPropagation();
-            if (!db) return;
+                let answer = "";
+                let success = false;
+                let lastErr = "";
 
-            const transaction = db.transaction(['chats'], 'readwrite');
-            const store = transaction.objectStore('chats');
-            store.delete(chatId);
-
-            transaction.oncomplete = () => {
-                if (activeChatId === chatId) createNewChat();
-                loadAllChats();
-            };
-        }
-
-        // Highlight selection state in UI sidebar
-        function highlightActiveChat(chatId) {
-            const children = chatsListContainer.querySelectorAll('[data-chat-id]');
-            children.forEach(el => {
-                if (el.getAttribute('data-chat-id') === chatId) {
-                    el.classList.add('bg-[#2a2b2d]', 'text-white');
-                    el.classList.remove('text-gray-400');
-                } else {
-                    el.classList.remove('bg-[#2a2b2d]', 'text-white');
-                    el.classList.add('text-gray-400');
-                }
-            });
-        }
-
-        // Load specific saved chat into UI
-        function selectChat(chatId) {
-            if (!db) return;
-            const transaction = db.transaction(['chats'], 'readonly');
-            const store = transaction.objectStore('chats');
-            const request = store.get(chatId);
-            
-            request.onsuccess = () => {
-                const data = request.result;
-                if (data) {
-                    activeChatId = chatId;
-                    chatHistory = data.history || [];
-
-                    chatContainer.innerHTML = '';
-                    welcomeContainer.style.display = 'none';
-                    chatContainer.classList.remove('hidden');
-
-                    chatHistory.forEach(msg => {
-                        if (msg.role !== 'system') {
-                            addMessage(msg.content, msg.role === 'user');
-                        }
-                    });
-
-                    highlightActiveChat(chatId);
-
-                    if (!sidebar.classList.contains('-translate-x-full')) {
-                        toggleSidebar();
-                    }
-                }
-            };
-        }
-
-        // Load and render all saved chats
-        function loadAllChats() {
-            if (!db) return;
-            const transaction = db.transaction(['chats'], 'readonly');
-            const store = transaction.objectStore('chats');
-            const request = store.getAll();
-
-            request.onsuccess = () => {
-                chatsListContainer.innerHTML = '';
-                const chats = request.result;
-                chats.sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
-
-                if (chats.length === 0) {
-                    chatsListContainer.innerHTML = `<div class="text-[11px] text-gray-500 px-4 py-2 italic">No past sessions</div>`;
-                    return;
-                }
-
-                chats.forEach(chat => {
-                    const pill = document.createElement('div');
-                    pill.setAttribute('data-chat-id', chat.id);
-                    pill.className = `group flex items-center justify-between px-3.5 py-2.5 mx-2 rounded-xl cursor-pointer text-sm font-medium transition-all ${
-                        activeChatId === chat.id ? 'bg-[#2a2b2d] text-white' : 'text-gray-400 hover:bg-[#252627] hover:text-gray-200'
-                    }`;
-
-                    pill.addEventListener('click', () => selectChat(chat.id));
-
-                    pill.innerHTML = `
-                        <div class="flex items-center gap-2.5 min-w-0 flex-1">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4 text-gray-500 group-hover:text-indigo-400 transition-colors shrink-0"><path stroke-linecap="round" stroke-linejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 0 1 .865-.501 48.172 48.172 0 0 0 3.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0 0 12 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018Z" /></svg>
-                            <span class="truncate pr-2">${chat.title}</span>
-                        </div>
-                        <button class="opacity-0 group-hover:opacity-100 p-1 text-gray-500 hover:text-red-400 hover:bg-[#131314] rounded transition-all shrink-0" title="Delete chat">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-3.5 h-3.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
-                        </button>
-                    `;
-
-                    pill.querySelector('button').addEventListener('click', (e) => deleteChatFromLocalDB(chat.id, e));
-                    chatsListContainer.appendChild(pill);
-                });
-                
-                // Keep UI highlight in sync
-                highlightActiveChat(activeChatId);
-            };
-        }
-
-        // Init Local Database on load
-        initDB().then(() => {
-            loadAllChats();
-        });
-
-        // Smoothly inject a message to the chat view
-        function addMessage(text, isUser = false, isTyping = false) {
-            // Hide the initial suggestion screen once conversation begins
-            if (welcomeContainer.style.display !== 'none') {
-                welcomeContainer.style.display = 'none';
-                chatContainer.classList.remove('hidden');
-            }
-
-            const wrapper = document.createElement('div');
-            wrapper.className = `flex gap-3 w-full max-w-3xl mx-auto py-2 ${isUser ? 'justify-end' : 'justify-start'} animate-fade-in`;
-            
-            if (isUser) {
-                // User Prompt layout (Pill-shaped, aligned to the right)
-                wrapper.innerHTML = `
-                    <div class="flex flex-col items-end max-w-[75%]">
-                        <div class="bg-[#2a2b2d] text-gray-100 rounded-3xl px-4 py-2 border border-[#3c4043] text-[15px] whitespace-pre-wrap leading-relaxed shadow-sm">
-                            ${text}
-                        </div>
-                    </div>
-                `;
-            } else {
-                // Nexus Response layout (No bubble, sparkling avatar, formatted markdown-like text)
-                const textContainerId = isTyping ? 'typing-indicator' : `resp-${Date.now()}`;
-                
-                wrapper.innerHTML = `
-                    <div class="flex items-start gap-3 w-full">
-                        <div class="w-7 h-7 rounded-full bg-gradient-to-tr from-blue-500 to-indigo-600 flex items-center justify-center flex-shrink-0 shadow-lg mt-0.5">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4 text-white">
-                                <path d="M11.645 20.91l-.007-.003-.003-.001a1.99 1.99 0 01-.194-.124c-.201-.15-.46-.395-.717-.745-.515-.7-1.002-1.748-1.344-3.085a11.91 11.91 0 01-.334-1.745l-.014-.114-.114-.014a11.91 11.91 0 01-1.745-.334c-1.337-.342-2.385-.829-3.085-1.344-.35-.257-.594-.516-.745-.717a1.99 1.99 0 01-.125-.194L3.1 12.35l.001-.003.003-.007a2.078 2.078 0 01.353-.45c.29-.272.71-.588 1.258-.92 1.096-.665 2.585-1.348 4.298-1.638l.142-.024.024-.142c.29-1.713.973-3.202 1.638-4.298.332-.548.648-.967.92-1.258a2.078 2.078 0 01.453-.353l.006-.003.004-.001a1.99 1.99 0 01.194.124c.201.15.46.395.717.745.515.7 1.002 1.748 1.344 3.085.122.48.234.962.334 1.745l.014.114.114.014c.783.1 1.265.212 1.745.334 1.337.342 2.385.829 3.085 1.344.35.257.594.516.745.717.043.058.086.124.125.194l.007.003.003.001a2.078 2.078 0 01-.353.45c-.29.272-.71.588-1.258.92-1.096.665-2.585 1.348-4.298 1.638l-.142.024-.024.142c-.29 1.713-.973 3.202-1.638 4.298-.332.548-.648.967-.92 1.258a2.078 2.078 0 01-.453.353z" />
-                            </svg>
-                        </div>
-                        <div id="${textContainerId}" class="flex-1 text-gray-200 text-[15px] leading-relaxed whitespace-pre-wrap pt-0.5">
-                            ${isTyping ? '<div class="py-2.5 pl-2"><div class="dot-flashing"></div></div>' : text}
-                        </div>
-                    </div>
-                `;
-            }
-
-            chatContainer.appendChild(wrapper);
-            chatContainer.scrollTop = chatContainer.scrollHeight;
-            return wrapper.querySelector(isUser ? '.bg-\\[\\#2a2b2d\\]' : '.flex-1');
-        }
-
-        // ==========================================
-        //  CREATE THE INLINE WEB WORKER (BACKGROUND)
-        // ==========================================
-        const workerBlobCode = `
-            import { pipeline, env, TextStreamer } from 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.0.0/dist/transformers.min.js';
-
-            env.allowLocalModels = false;
-            env.remoteHost = 'https://huggingface.co';
-
-            // OPTIMIZATION 1: Strictly enforce 1 thread. Multi-threaded WASM triggers heavy allocation overhead on Chrome OS.
-            env.backends.onnx.wasm.numThreads = 1;
-            // OPTIMIZATION 2: Ensure WebAssembly SIMD is checked/active for raw processing throughput.
-            env.backends.onnx.wasm.simd = true;
-
-            // RESTORED ONNX DEFAULTS: Previously we disabled graph optimizations to save RAM, 
-            // but disabling them corrupts tensor math in Qwen/SmolLM, causing random gibberish output.
-            env.backends.onnx.session_options = {
-                enableCpuMemArena: false,
-                enableMemPattern: false
-            };
-
-            // SOLID SANDBOX RECOVERY INTERCEPTOR:
-            const originalFetch = env.fetch || fetch;
-            env.fetch = async function(url, options) {
-                let urlString = typeof url === 'string' ? url : url.url;
-
-                // Protect against case-insensitive URL requests using regex
-                if (urlString) {
-                    urlString = urlString.replace(/smollm2-135m-instruct/i, 'SmolLM2-135M-Instruct');
-                    urlString = urlString.replace(/qwen2\.5-0\.5b-instruct/i, 'Qwen2.5-0.5B-Instruct');
-                    urlString = urlString.replace(/qwen2\.5-1\.5b-instruct/i, 'Qwen2.5-1.5B-Instruct');
-                    urlString = urlString.replace(/smollm-135m-instruct/i, 'SmolLM-135M-Instruct');
-                }
-
-                // CRITICAL FIX: We MUST keep all original headers (like Accept and Content-Type) 
-                // for the Pro Engine's tokenizer files. We ONLY overwrite the credentials behavior.
-                const cleanOptions = {
-                    ...options,
-                    credentials: 'omit', // Solves 401 Unauthorized errors in iframe sandbox
-                    mode: 'cors'
-                };
-
-                try {
-                    const response = await fetch(urlString, cleanOptions);
-                    if (response.ok) return response;
-                    if (response.status === 404) throw new Error('File not found (404)');
-                    throw new Error('HTTP Status ' + response.status);
-                } catch (err) {
-                    console.warn('Primary fetch failed. Swapping to backup CDN gateway...', err);
-                    
-                    let fallbackUrl = urlString;
-                    if (urlString.includes('huggingface.co')) {
-                        fallbackUrl = urlString.replace('huggingface.co', 'hf-mirror.com');
-                    } else if (urlString.includes('hf-mirror.com')) {
-                        fallbackUrl = urlString.replace('hf-mirror.com', 'huggingface.co');
-                    }
-
+                // Retry logic built-in
+                for (let i = 0; i < 3; i++) {
                     try {
-                        const fallbackResponse = await fetch(fallbackUrl, cleanOptions);
-                        if (fallbackResponse.ok) return fallbackResponse;
-                        throw new Error('HTTP Status ' + fallbackResponse.status);
-                    } catch (fallbackErr) {
-                        throw err;
-                    }
-                }
-            };
+                        const response = await fetch("https://text.pollinations.ai/openai/chat/completions", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                                messages: apiMessages,
+                                model: "openai", 
+                                stream: true 
+                            })
+                        });
 
-            let aiPipeline = null;
-            let lastProgressSent = 0;
+                        if (!response.ok) throw new Error("HTTP " + response.status);
 
-            self.onmessage = async function(e) {
-                const { action, payload } = e.data;
-
-                if (action === 'load') {
-                    try {
-                        const deviceToUse = payload?.device || 'wasm';
-                        const modelPath = payload?.model || 'onnx-community/SmolLM2-135M-Instruct';
+                        const reader = response.body.getReader();
+                        const decoder = new TextDecoder('utf-8');
                         
-                        // CRITICAL FIX: 
-                        // If execution is forced on WASM (CPU fallback), requesting 'q4f16' triggers 
-                        // a massive CPU decompression spike that immediately throws Error 3588522552 / Out of Memory.
-                        // We must enforce 'q4' for WASM and only use 'q4f16' when WebGPU is successfully bound.
-                        const dtypeToUse = (deviceToUse === 'webgpu') ? 'q4f16' : 'q4';
-
-                        aiPipeline = await pipeline('text-generation', modelPath, {
-                            device: deviceToUse,
-                            dtype: dtypeToUse, 
-                            progress_callback: (data) => {
-                                const now = Date.now();
-                                if (now - lastProgressSent > 150 || data.status === 'done' || data.status === 'initiate') {
-                                    self.postMessage({ action: 'progress', data });
-                                    lastProgressSent = now;
+                        while (true) {
+                            const { done, value } = await reader.read();
+                            if (done) break;
+                            
+                            const chunk = decoder.decode(value, { stream: true });
+                            const lines = chunk.split('\n'); 
+                            
+                            for (const line of lines) {
+                                if (line.startsWith('data: ') && line !== 'data: [DONE]') {
+                                    try {
+                                        const jsonParse = JSON.parse(line.slice(6));
+                                        if (jsonParse.choices && jsonParse.choices[0].delta && jsonParse.choices[0].delta.content) {
+                                            answer += jsonParse.choices[0].delta.content;
+                                            
+                                            let displayAnswer = answer;
+                                            
+                                            // Clean up potential ad injections from free api
+                                            if (displayAnswer.includes('--- **Support Pollinations')) displayAnswer = displayAnswer.split('--- **Support Pollinations')[0];
+                                            if (displayAnswer.includes('🌸 **Ad** 🌸')) displayAnswer = displayAnswer.split('🌸 **Ad** 🌸')[0];
+                                            if (displayAnswer.includes('Powered by Pollinations')) displayAnswer = displayAnswer.split('Powered by Pollinations')[0];
+                                            
+                                            if (displayAnswer.toLowerCase().startsWith('nexus:')) displayAnswer = displayAnswer.substring(6).trimStart();
+                                            if (displayAnswer.toLowerCase().startsWith('assistant:')) displayAnswer = displayAnswer.substring(10).trimStart();
+                                            
+                                            // Trigger UI token update
+                                            handleTokenUpdate(task.id, displayAnswer);
+                                        }
+                                    } catch (err) {
+                                        // Ignore parse errors on incomplete chunks
+                                    }
                                 }
                             }
-                        });
-                        self.postMessage({ action: 'ready', device: deviceToUse, model: modelPath });
-                    } catch (err) {
-                        self.postMessage({ action: 'error', error: err.message || String(err) });
-                    }
-                }
-
-                if (action === 'generate') {
-                    if (!aiPipeline) {
-                        self.postMessage({ action: 'error', error: 'Nexus engine missing initialization.' });
-                        return;
-                    }
-
-                    try {
-                        const streamer = new TextStreamer(aiPipeline.tokenizer, {
-                            skip_prompt: true,
-                            callback_function: (token) => {
-                                self.postMessage({ action: 'token', token });
-                            }
-                        });
-
-                        // ADDED strict repetition penalties and sampling. 
-                        // Greedy decoding (do_sample: false) on compressed models often loops into gibberish.
-                        const results = await aiPipeline(payload.chatHistory, {
-                            max_new_tokens: 350,
-                            do_sample: true, 
-                            temperature: 0.65,
-                            top_k: 40,
-                            repetition_penalty: 1.15,
-                            streamer: streamer
-                        });
-
-                        let answer = "";
-                        const genText = results[0].generated_text;
-                        if (Array.isArray(genText)) {
-                            answer = genText[genText.length - 1].content;
-                        } else if (typeof genText === 'string') {
-                            answer = genText;
                         }
-
-                        self.postMessage({ action: 'complete', answer });
-                    } catch (err) {
-                        self.postMessage({ action: 'error', error: err.message || String(err) });
-                    }
-                }
-            };
-        `;
-
-        let blob = new Blob([workerBlobCode], { type: 'application/javascript' });
-        let worker = new Worker(URL.createObjectURL(blob), { type: 'module' });
-
-        // Thread Communication Handler
-        function setupWorkerListener() {
-            worker.onmessage = function(e) {
-                const { action, data, token, answer, error, device, model } = e.data;
-
-                if (action === 'progress') {
-                    if (data.status === 'initiate') {
-                        progressText.innerText = `Connecting to mirror... ${data.file || ''}`;
-                    } else if (data.status === 'progress') {
-                        const percent = data.progress !== undefined ? data.progress : Math.round((data.loaded / data.total) * 100);
-                        progressBar.style.width = `${percent}%`;
-                        progressText.innerText = `Fetching weights: ${Math.round(percent)}%`;
-                    } else if (data.status === 'done') {
-                        progressText.innerText = `Optimizing pipeline architecture (Safe Memory Mode)...`;
-                    }
-                }
-
-                else if (action === 'ready') {
-                    const lowerModel = model.toLowerCase();
-                    const isUltraLow = lowerModel.includes('smollm');
-                    const isPro = lowerModel.includes('1.5b');
-                    
-                    if (isPro) {
-                        speedIndicator.innerText = `Pro Engine Loaded (Qwen2.5 1.5B) [${device.toUpperCase()}] 🔥`;
-                        activeModelSidebar.innerText = "Qwen2.5-1.5B (Pro)";
-                        document.getElementById('header-brand').innerText = "Nexus AI (Pro)";
-                        document.getElementById('welcome-model-subtitle').innerText = `Full Pro-tier offline reasoning active (${device.toUpperCase()}).`;
-                    } else if (isUltraLow) {
-                        speedIndicator.innerText = `Ultra-Lite Engine Loaded (SmolLM2 135M)`;
-                        activeModelSidebar.innerText = "SmolLM2-135M (Lite)";
-                        document.getElementById('header-brand').innerText = "Nexus AI (Lite)";
-                        document.getElementById('welcome-model-subtitle').innerText = "Lite-weight local reasoning active.";
-                    } else {
-                        speedIndicator.innerText = device === 'webgpu' ? 'WebGPU Balanced Engine Loaded 🚀' : 'Balanced Engine (CPU Mode)';
-                        activeModelSidebar.innerText = "Qwen2.5-0.5B (Balanced)";
-                        document.getElementById('header-brand').innerText = "Nexus AI";
-                        document.getElementById('welcome-model-subtitle').innerText = "Balanced local reasoning active.";
-                    }
-
-                    loadingScreen.style.opacity = '0';
-                    setTimeout(() => loadingScreen.style.display = 'none', 700);
-                    userInput.disabled = false;
-                    sendBtn.disabled = false;
-                    userInput.focus();
-                }
-
-                else if (action === 'token') {
-                    if (currentTypingBubble && currentTypingBubble.id === 'typing-indicator') {
-                        currentTypingBubble.id = '';
-                        currentTypingBubble.innerText = '';
-                    }
-                    if (currentTypingBubble) {
-                        currentTypingBubble.innerText += token;
-                        chatContainer.scrollTop = chatContainer.scrollHeight;
-                    }
-                }
-
-                else if (action === 'complete') {
-                    isGenerating = false;
-                    sendBtn.disabled = false;
-                    userInput.disabled = false;
-                    userInput.focus();
-
-                    if (currentTypingBubble) {
-                        if (currentTypingBubble.id === 'typing-indicator') {
-                            currentTypingBubble.id = '';
-                            currentTypingBubble.innerText = answer;
-                        }
-                        chatHistory.push({ role: "assistant", content: currentTypingBubble.innerText });
                         
-                        saveChatToLocalDB();
-                    }
-                    currentTypingBubble = null;
-                }
-
-                else if (action === 'error') {
-                    isGenerating = false;
-                    sendBtn.disabled = false;
-                    userInput.disabled = false;
-
-                    if (currentTypingBubble) {
-                        currentTypingBubble.id = '';
-                        currentTypingBubble.innerText = `Engine error: ${error}`;
-                    } else {
-                        // User friendly Out-Of-Memory parsing for the Pro engine (including WASM numeric crashes)
-                        if (error.includes('Aborted()') || error.includes('3588522552')) {
-                            progressText.innerText = `Hardware Limit Reached: Your browser blocked the massive memory allocation. Please reload and select the Balanced engine.`;
-                        } else if (error.toLowerCase().includes('memory') || error.toLowerCase().includes('buffer') || error.toLowerCase().includes('allocation')) {
-                            progressText.innerText = `Out of Memory: Your device doesn't have enough RAM for the 1.5B Pro Engine. Try Balanced.`;
-                        } else if (error.includes('404')) {
-                            progressText.innerText = `File missing on server. Verify model repository name.`;
+                        if (answer.length > 0) {
+                            success = true;
+                            break;
                         } else {
-                            progressText.innerText = `Error: ${error}. Retrying connection...`;
+                            throw new Error("Stream returned empty");
                         }
-                        
-                        progressText.className = "text-xs font-mono text-red-400 mb-6 font-bold";
-                        troubleshootContainer.classList.remove('hidden');
-                        
-                        setTimeout(() => {
-                            choicePanel.classList.remove('hidden');
-                        }, 4000);
+                    } catch (e) {
+                        lastErr = e.message;
+                        await new Promise(r => setTimeout(r, 500)); // wait before retry
                     }
-                    currentTypingBubble = null;
                 }
-            };
-        }
 
-        setupWorkerListener();
+                if (!success) throw new Error("Cloud Node Congested: " + lastErr);
 
-        // Safe Select & Boot Function
-        window.selectAndBoot = async function(modelPath) {
-            selectedModelPath = modelPath;
-            choicePanel.classList.add('hidden');
-            progressPanel.classList.remove('hidden');
-            troubleshootContainer.classList.add('hidden');
-            progressBar.style.width = `0%`;
-            progressText.innerText = `Initializing secure workspace...`;
-            progressText.className = "text-xs font-mono text-indigo-400 mb-6";
+                // Final cleanup
+                if (answer.includes('--- **Support Pollinations')) answer = answer.split('--- **Support Pollinations')[0];
+                answer = answer.trim();
+                
+                handleCompletion(task.id, answer);
 
-            // CRITICAL STEP:
-            // Proactively verify if WebGPU is *genuinely* bindable and supported within this frame.
-            // If it fails or is blocked by sandbox permissions, we force-negotiate execution as 'wasm' CPU mode.
-            let deviceToUse = 'wasm';
-            if (navigator.gpu) {
-                try {
-                    const adapter = await navigator.gpu.requestAdapter();
-                    if (adapter) {
-                        deviceToUse = 'webgpu';
-                    }
-                } catch (e) {
-                    console.warn("Acquiring WebGPU adapter failed, using WASM fallback:", e);
-                }
+            } catch (err) {
+                handleError(task.id, String(err));
             }
 
-            worker.postMessage({ 
-                action: 'load', 
-                payload: { 
-                    model: selectedModelPath,
-                    device: deviceToUse
-                } 
-            });
-        };
+            this.isProcessing = false;
+            this.processQueue();
+        },
 
-        // Main input sending function with Sliding Context Window optimization
-        function handleSend() {
-            const text = userInput.value.trim();
-            if (!text || isGenerating) return;
+        postMessage: function(data) {
+            this.queue.push(data);
+            this.processQueue();
+        }
+    };
 
-            userInput.value = '';
-            addMessage(text, true);
-            isGenerating = true;
-            sendBtn.disabled = true;
-            userInput.disabled = true;
-            
-            currentTypingBubble = addMessage('', false, true);
-            chatHistory.push({ role: "user", content: text });
+    // --- UI Update Handlers ---
 
-            // OPTIMIZATION 5: Sliding Context Window.
-            const systemPrompt = chatHistory[0];
-            const interactiveHistory = chatHistory.slice(1);
-            
-            // Limit history sent to the worker to the last 4 turns
-            const maxContextTurns = 4;
-            const truncatedHistory = [
-                systemPrompt,
-                ...interactiveHistory.slice(-maxContextTurns)
-            ];
+    function handleTokenUpdate(id, textSoFar) {
+        if (currentTypingBubbleId === id) {
+            const container = document.getElementById('bubble-' + id);
+            if (container && container.classList.contains('is-typing')) {
+                container.classList.remove('is-typing');
+            }
+            const textNode = document.getElementById('text-' + id);
+            if (textNode) {
+                // Compile Markdown on-the-fly with marked.js
+                textNode.innerHTML = marked.parse(textSoFar);
+            }
+            chatScroller.scrollTop = chatScroller.scrollHeight;
+        }
+    }
 
-            worker.postMessage({ 
-                action: 'generate', 
-                payload: { chatHistory: truncatedHistory } 
-            });
+    function handleCompletion(id, finalAnswer) {
+        if (timerInterval) clearInterval(timerInterval);
+        
+        chatInput.disabled = false;
+        chatSubmit.disabled = false;
+        chatInput.focus();
+
+        if (currentTypingBubbleId === id) {
+            const textNode = document.getElementById('text-' + id);
+            if (textNode) {
+                textNode.innerHTML = marked.parse(finalAnswer); 
+                chatHistoryContext.push({ role: "assistant", content: finalAnswer });
+            }
+            // Remove timer text
+            const timerEl = document.getElementById('timer-' + id);
+            if (timerEl) timerEl.remove();
+        }
+        
+        currentTypingBubbleId = null;
+        chatScroller.scrollTop = chatScroller.scrollHeight;
+    }
+
+    function handleError(id, errorMsg) {
+        if (timerInterval) clearInterval(timerInterval);
+        
+        chatInput.disabled = false;
+        chatSubmit.disabled = false;
+
+        if (currentTypingBubbleId === id) {
+            const container = document.getElementById('bubble-' + id);
+            if (container) container.classList.remove('is-typing');
+            const textNode = document.getElementById('text-' + id);
+            if (textNode) {
+                textNode.innerHTML = `<span class="text-red-500 font-bold">⚠️ Connection Error:</span> <span class="text-red-400">${escapeHTML(errorMsg)}</span>`;
+            }
+            const timerEl = document.getElementById('timer-' + id);
+            if (timerEl) timerEl.remove();
+        }
+        
+        currentTypingBubbleId = null;
+        chatScroller.scrollTop = chatScroller.scrollHeight;
+    }
+
+    // --- Message Submission Manager ---
+    function sendUserQuery(userText) {
+        if (!userText || currentTypingBubbleId) return;
+
+        // Hide Welcome Screen
+        if (emptyState) {
+          emptyState.classList.add('hidden');
         }
 
-        // Action binding
-        sendBtn.addEventListener('click', handleSend);
-        userInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') handleSend();
+        // 1. Render User Message (Gemini style: Clean right-aligned paragraph, no heavy bubble)
+        chatHistoryEl.innerHTML += `
+            <div class="flex items-start justify-end gap-4 max-w-3xl mx-auto w-full animate-fade-in">
+              <div class="flex flex-col items-end max-w-[85%]">
+                <div class="text-[11px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest mb-1">You</div>
+                <div class="bg-slate-200/60 dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 p-4 rounded-3xl rounded-tr-none text-[15px] leading-relaxed font-medium">
+                  ${escapeHTML(userText)}
+                </div>
+              </div>
+            </div>
+        `;
+        
+        chatInput.value = '';
+        chatInput.disabled = true;
+        chatSubmit.disabled = true;
+        chatScroller.scrollTop = chatScroller.scrollHeight;
+
+        // 2. Setup AI State
+        chatHistoryContext.push({ role: "user", content: userText });
+        
+        // Keep context window manageable (last 10 messages)
+        if (chatHistoryContext.length > 10) {
+            chatHistoryContext = chatHistoryContext.slice(-10);
+        }
+
+        const msgId = `msg-${Date.now()}`;
+        currentTypingBubbleId = msgId;
+
+        // 3. Render AI Placeholder Bubble (Gemini style: Clean flat design with Sparkle icon)
+        chatHistoryEl.innerHTML += `
+            <div id="bubble-${msgId}" class="is-typing flex items-start gap-4 max-w-3xl mx-auto w-full animate-fade-in mt-6">
+              <!-- Animated gradient sparkle container -->
+              <div class="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 gemini-loading-spark text-white shadow-md">
+                <i class="ph-fill ph-sparkle text-sm animate-pulse"></i>
+              </div>
+              <div class="flex flex-col w-full min-w-0">
+                <div class="text-[11px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest mb-1.5">Nexus AI</div>
+                <div id="text-${msgId}" class="markdown-content font-medium text-[15px] leading-relaxed text-slate-800 dark:text-zinc-200 w-full">
+                    <div class="flex items-center gap-1.5 py-4">
+                      <span class="w-2 h-2 rounded-full bg-blue-500 animate-bounce" style="animation-delay: 0s"></span>
+                      <span class="w-2 h-2 rounded-full bg-purple-500 animate-bounce" style="animation-delay: 0.15s"></span>
+                      <span class="w-2 h-2 rounded-full bg-pink-500 animate-bounce" style="animation-delay: 0.3s"></span>
+                    </div>
+                </div>
+                <div id="timer-${msgId}" class="text-[9px] text-slate-400 dark:text-zinc-600 font-mono text-right mt-2 self-end">0.0s</div>
+              </div>
+            </div>
+        `;
+        chatScroller.scrollTop = chatScroller.scrollHeight;
+
+        // Start Live Timer
+        timerStart = Date.now();
+        if (timerInterval) clearInterval(timerInterval);
+        timerInterval = setInterval(() => {
+            const timerEl = document.getElementById(`timer-${msgId}`);
+            if (timerEl) {
+                timerEl.innerText = ((Date.now() - timerStart) / 1000).toFixed(1) + 's';
+            } else {
+                clearInterval(timerInterval);
+            }
+        }, 100);
+
+        // Check for local greeting override
+        const normalizedInput = userText.toLowerCase().trim();
+        const greetings = ['hi', 'hello', 'hey', 'hi!', 'hello!', 'hey!'];
+        
+        if (greetings.includes(normalizedInput)) {
+            const localWelcomeResponse = "Hi there! 👋 How can I help you today?";
+
+            // Simulate a slight delay so it feels natural
+            setTimeout(() => {
+                handleTokenUpdate(msgId, localWelcomeResponse);
+                handleCompletion(msgId, localWelcomeResponse);
+            }, 600);
+            return;
+        }
+
+        // 4. Send to Engine if not a local command
+        window.aiEngine.postMessage({
+            id: msgId,
+            messages: [...chatHistoryContext]
         });
-    </script>
+    }
+
+    // --- Form Submit Handler ---
+    chatForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        sendUserQuery(chatInput.value.trim());
+    });
+
+    // --- Global Event Delegation ---
+    document.addEventListener('click', (e) => {
+      const target = e.target.closest('[data-click]');
+      if (!target) return;
+      
+      const action = target.dataset.click;
+      const arg = target.dataset.arg;
+
+      if (action === 'fillSuggestion') {
+        chatInput.value = arg;
+        sendUserQuery(arg);
+      }
+    });
+
+  </script>
 </body>
 </html>
