@@ -124,7 +124,7 @@
     }
   </style>
 </head>
-<body class="bg-gemini-lightBg dark:bg-gemini-darkBg text-slate-800 dark:text-zinc-200 transition-colors duration-300 h-screen flex flex-col font-sans selection:bg-indigo-500/30 overflow-hidden">
+<body class="bg-gemini-lightBg dark:bg-gemini-darkBg text-slate-800 dark:text-zinc-200 transition-colors duration-300 h-screen h-[100dvh] flex flex-col font-sans selection:bg-indigo-500/30 overflow-hidden">
 
   <!-- Header -->
   <header class="flex-none bg-transparent p-4 sm:px-6 z-10 flex items-center justify-between">
@@ -159,8 +159,8 @@
   </header>
 
   <!-- Main Chat Container -->
-  <main class="flex-1 overflow-hidden flex flex-col items-center justify-center relative w-full max-w-4xl mx-auto px-4 sm:px-6">
-    <div id="chat-scroller" class="w-full flex-1 overflow-y-auto custom-scrollbar pb-32">
+  <main class="flex-1 overflow-hidden flex flex-col relative w-full max-w-4xl mx-auto px-4 sm:px-6">
+    <div id="chat-scroller" class="w-full flex-1 overflow-y-auto custom-scrollbar pb-6 pr-1">
       <div id="chat-history" class="space-y-8 py-6">
         
         <!-- INITIAL EMPTY STATE (Gemini Welcomer) -->
@@ -217,8 +217,8 @@
   </main>
 
   <!-- Input Container -->
-  <footer class="absolute bottom-0 inset-x-0 bg-gradient-to-t from-gemini-lightBg via-gemini-lightBg/95 to-transparent dark:from-gemini-darkBg dark:via-gemini-darkBg/95 pb-6 pt-10 px-4 sm:px-6 z-20 flex justify-center">
-    <div class="w-full max-w-3xl relative">
+  <footer class="flex-none pb-6 pt-2 px-4 sm:px-6 w-full max-w-4xl mx-auto flex justify-center">
+    <div class="w-full relative">
       <form id="chat-form" class="relative flex items-center bg-white dark:bg-gemini-darkCard border border-slate-200/80 dark:border-zinc-800 rounded-full shadow-[0_4px_30px_rgba(0,0,0,0.04)] dark:shadow-[0_12px_40px_rgba(0,0,0,0.3)] transition-all overflow-hidden focus-within:ring-2 focus-within:ring-indigo-500/20 focus-within:border-slate-300 dark:focus-within:border-zinc-700 pr-2 pl-4 sm:pl-6">
         
         <button type="button" class="flex-none p-2 text-slate-400 hover:text-slate-600 dark:text-zinc-500 dark:hover:text-zinc-300 transition-colors" title="Upload Image (Simulated)">
