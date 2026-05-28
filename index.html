@@ -235,9 +235,13 @@
     </main>
 
     <!-- Nexus Music Floating Widget -->
-    <div id="nexus-music-widget" class="absolute bottom-24 left-4 sm:left-6 z-40 bg-white/90 dark:bg-zinc-800/90 backdrop-blur-md border border-slate-200 dark:border-zinc-700 rounded-[2rem] p-3 shadow-xl hidden items-center gap-3 w-[280px] animate-fade-in transition-all hover:scale-[1.02]">
+    <div id="nexus-music-widget" class="absolute bottom-24 left-4 sm:left-6 z-40 bg-white/90 dark:bg-zinc-800/90 backdrop-blur-md border border-slate-200 dark:border-zinc-700 rounded-[2rem] p-3 shadow-xl hidden items-center gap-3 w-[300px] animate-fade-in transition-all hover:scale-[1.02]">
         <div id="music-disc" class="w-12 h-12 rounded-full bg-gradient-to-tr from-[#d96570] to-[#9b72cb] flex items-center justify-center text-white shadow-md flex-shrink-0">
             <i class="ph-fill ph-music-notes text-xl"></i>
+        </div>
+        <!-- Visible YouTube Player Container -->
+        <div id="yt-player-wrapper" class="hidden w-16 h-12 rounded-xl overflow-hidden bg-black flex-shrink-0 shadow-inner">
+            <div id="yt-player-container" class="w-full h-full pointer-events-none"></div>
         </div>
         <div class="flex-1 min-w-0">
             <p class="text-[10px] font-bold text-slate-400 dark:text-zinc-400 uppercase tracking-widest leading-none mb-1">Nexus Music</p>
@@ -246,8 +250,6 @@
         <button data-click="toggleMusic" class="w-10 h-10 rounded-full bg-slate-100 dark:bg-zinc-700 flex items-center justify-center text-slate-600 dark:text-zinc-300 hover:bg-slate-200 dark:hover:bg-zinc-600 transition-colors flex-shrink-0">
             <i id="music-play-icon" class="ph-fill ph-pause text-xl"></i>
         </button>
-        <!-- Invisible YouTube Player Container -->
-        <div id="yt-player-container" class="hidden"></div>
     </div>
 
     <!-- Input Container -->
@@ -332,10 +334,10 @@
 
     window.onYouTubeIframeAPIReady = function() {
         ytPlayer = new YT.Player('yt-player-container', {
-            height: '0',
-            width: '0',
+            height: '100%',
+            width: '100%',
             videoId: '',
-            playerVars: { 'autoplay': 1, 'controls': 0 },
+            playerVars: { 'autoplay': 1, 'controls': 0, 'disablekb': 1 },
             events: {
                 'onReady': () => console.log("Nexus Music Engine Ready"),
                 'onStateChange': onPlayerStateChange
@@ -833,6 +835,7 @@
         
         if (lowerInput.startsWith('play ')) {
             const query = userText.substring(5).trim();
+            const searchQuery = query + " lyrics";
             handleTokenUpdate(msgId, "Connecting to Nexus Music... 🎵\n\nSearching for `" + query + "`...");
 
             if (!YOUTUBE_API_KEY || YOUTUBE_API_KEY === "YOUR_YOUTUBE_API_KEY_HERE") {
@@ -842,7 +845,7 @@
                 return;
             }
 
-            fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(query)}&type=video&key=${YOUTUBE_API_KEY}`)
+            fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(searchQuery)}&type=video&key=${YOUTUBE_API_KEY}`)
             .then(async res => {
                 const data = await res.json();
                 if (!res.ok || data.error) {
@@ -858,8 +861,16 @@
                     if (ytPlayer && ytPlayer.loadVideoById) {
                         ytPlayer.loadVideoById(videoId);
                         const widget = document.getElementById('nexus-music-widget');
-                        if(widget) widget.classList.remove('hidden');
-                        if(widget) widget.classList.add('flex');
+                        if(widget) {
+                            widget.classList.remove('hidden');
+                            widget.classList.add('flex');
+                        }
+                        
+                        const disc = document.getElementById('music-disc');
+                        const wrapper = document.getElementById('yt-player-wrapper');
+                        if (disc) disc.classList.add('hidden');
+                        if (wrapper) wrapper.classList.remove('hidden');
+
                         document.getElementById('music-title').textContent = title;
                         
                         handleCompletion(msgId, `🎶 **Now Playing:** ${title}\n\nI've connected to Nexus Music and started your track in the background. You can control it using the widget!`);
