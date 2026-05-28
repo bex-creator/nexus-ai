@@ -240,7 +240,7 @@
             <i class="ph-fill ph-music-notes text-xl"></i>
         </div>
         <!-- Visible YouTube Player Container -->
-        <div id="yt-player-wrapper" class="hidden w-16 h-12 rounded-xl overflow-hidden bg-black flex-shrink-0 shadow-inner">
+        <div id="yt-player-wrapper" class="hidden w-20 h-14 rounded-xl overflow-hidden bg-black flex-shrink-0 shadow-inner">
             <div id="yt-player-container" class="w-full h-full pointer-events-none"></div>
         </div>
         <div class="flex-1 min-w-0">
@@ -337,7 +337,13 @@
             height: '100%',
             width: '100%',
             videoId: '',
-            playerVars: { 'autoplay': 1, 'controls': 0, 'disablekb': 1 },
+            playerVars: { 
+                'autoplay': 1, 
+                'controls': 0, 
+                'disablekb': 1,
+                'enablejsapi': 1,
+                'origin': window.location.origin
+            },
             events: {
                 'onReady': () => console.log("Nexus Music Engine Ready"),
                 'onStateChange': onPlayerStateChange
@@ -845,7 +851,7 @@
                 return;
             }
 
-            fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(searchQuery)}&type=video&key=${YOUTUBE_API_KEY}`)
+            fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(searchQuery)}&type=video&videoEmbeddable=true&key=${YOUTUBE_API_KEY}`)
             .then(async res => {
                 const data = await res.json();
                 if (!res.ok || data.error) {
