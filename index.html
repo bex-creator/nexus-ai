@@ -320,13 +320,11 @@
   <!-- Logic Script -->
   <script>
     // --- NEXUS MUSIC / YOUTUBE API SETUP ---
-    // ADD YOUR YOUTUBE DATA API KEY HERE FOR MUSIC SEARCHES TO WORK
     const YOUTUBE_API_KEY = "AIzaSyCv-PkVUG0IIVLrLv1xV3hpUE2P2m7tznk"; 
     
     let ytPlayer = null;
     let isMusicPlaying = false;
 
-    // Inject YouTube IFrame API Script
     const ytScriptTag = document.createElement('script');
     ytScriptTag.src = "https://www.youtube.com/iframe_api";
     const firstScriptTag = document.getElementsByTagName('script')[0];
@@ -522,7 +520,7 @@
         }
     }
 
-    // The AI Engine Object
+    // --- The Core AI Engine Object (Using Pollinations API) ---
     window.aiEngine = {
         isProcessing: false,
         queue: [],
@@ -548,20 +546,23 @@
                 let success = false;
                 let lastErr = "";
 
+                // Retry logic built-in
                 for (let i = 0; i < 3; i++) {
                     try {
-                        const response = await fetch("[https://text.pollinations.ai/openai/chat/completions](https://text.pollinations.ai/openai/chat/completions)", {
+                        const response = await fetch("https://text.pollinations.ai/openai/chat/completions", {
                             method: "POST",
                             headers: { "Content-Type": "application/json" },
                             body: JSON.stringify({
                                 messages: apiMessages,
                                 model: "openai", 
                                 stream: true,
-                                max_tokens: 8192 
+                                max_tokens: 8192
                             })
                         });
 
-                        if (!response.ok) throw new Error("HTTP " + response.status);
+                        if (!response.ok) {
+                            throw new Error(`HTTP ${response.status}`);
+                        }
 
                         const reader = response.body.getReader();
                         const decoder = new TextDecoder('utf-8');
@@ -583,6 +584,7 @@
                                             
                                             let displayAnswer = answer;
                                             
+                                            // Clean up potential ad injections from free api
                                             if (displayAnswer.includes('--- **Support Pollinations')) displayAnswer = displayAnswer.split('--- **Support Pollinations')[0];
                                             if (displayAnswer.includes('🌸 **Ad** 🌸')) displayAnswer = displayAnswer.split('🌸 **Ad** 🌸')[0];
                                             if (displayAnswer.includes('Powered by Pollinations')) displayAnswer = displayAnswer.split('Powered by Pollinations')[0];
@@ -590,12 +592,15 @@
                                             if (displayAnswer.toLowerCase().startsWith('nexus:')) displayAnswer = displayAnswer.substring(6).trimStart();
                                             if (displayAnswer.toLowerCase().startsWith('assistant:')) displayAnswer = displayAnswer.substring(10).trimStart();
                                             
+                                            // UI Throttling: redraw the heavy markdown parser every ~30ms
                                             if (Date.now() - lastUpdate > 30) {
                                                 handleTokenUpdate(task.id, displayAnswer, task.isContinuation, task.baseText);
                                                 lastUpdate = Date.now();
                                             }
                                         }
-                                    } catch (err) { }
+                                    } catch (err) {
+                                        // Ignore parse errors on incomplete chunks
+                                    }
                                 }
                             }
                         }
@@ -614,6 +619,7 @@
 
                 if (!success) throw new Error("Cloud Node Congested: " + lastErr);
 
+                // Final cleanup
                 if (answer.includes('--- **Support Pollinations')) answer = answer.split('--- **Support Pollinations')[0];
                 answer = answer.trim();
                 
@@ -837,7 +843,13 @@
             }
 
             fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(query)}&type=video&key=${YOUTUBE_API_KEY}`)
-            .then(res => res.json())
+            .then(async res => {
+                const data = await res.json();
+                if (!res.ok || data.error) {
+                    throw new Error(data.error?.message || "YouTube API request failed.");
+                }
+                return data;
+            })
             .then(data => {
                 if (data.items && data.items.length > 0) {
                     const videoId = data.items[0].id.videoId;
@@ -859,7 +871,7 @@
                 }
             })
             .catch(err => {
-                handleCompletion(msgId, `⚠️ **Nexus Music Error:** The YouTube API rejected the request. Please check your API key and quotas.\n\nError details: ${err.message}`);
+                handleCompletion(msgId, `⚠️ **Nexus Music Error:** The YouTube API rejected the request.\n\nError details: ${err.message}\n\n*Note: If you are running this app on GitHub Pages, make sure your Google Cloud API key restrictions allow requests from your GitHub Pages URL.*`);
             });
             return;
         } else if (lowerInput === 'pause music' || lowerInput === 'stop music') {
@@ -890,7 +902,7 @@
             return;
         }
 
-        // --- STANDARD AI PROCESSING ---
+        // --- STANDARD AI PROCESSING (Visual & Text) ---
         let messageContent = userText;
         if (attachedImageBase64) {
             messageContent = [
