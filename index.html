@@ -246,10 +246,8 @@
         <button data-click="toggleMusic" class="w-10 h-10 rounded-full bg-slate-100 dark:bg-zinc-700 flex items-center justify-center text-slate-600 dark:text-zinc-300 hover:bg-slate-200 dark:hover:bg-zinc-600 transition-colors flex-shrink-0">
             <i id="music-play-icon" class="ph-fill ph-pause text-xl"></i>
         </button>
-        <!-- Invisible YouTube Player Container - Sized 200px but hidden offscreen to prevent browser autoplay block -->
-        <div class="absolute -left-[9999px] opacity-0 pointer-events-none">
-            <div id="yt-player-container"></div>
-        </div>
+        <!-- Invisible YouTube Player Container -->
+        <div id="yt-player-container" class="hidden"></div>
     </div>
 
     <!-- Input Container -->
@@ -327,42 +325,6 @@
     let ytPlayer = null;
     let isMusicPlaying = false;
 
-    // Add music queue state for fallbacks
-    window.currentMusicQueue = [];
-    window.currentMusicIndex = 0;
-    window.currentMusicMsgId = null;
-
-    function playCurrentMusic() {
-        if (!window.currentMusicQueue || window.currentMusicIndex >= window.currentMusicQueue.length) return;
-        
-        const item = window.currentMusicQueue[window.currentMusicIndex];
-        const videoId = item.id.videoId;
-        const title = item.snippet.title;
-        
-        if (ytPlayer && ytPlayer.loadVideoById) {
-            ytPlayer.loadVideoById(videoId);
-            ytPlayer.playVideo(); 
-            
-            const widget = document.getElementById('nexus-music-widget');
-            if(widget) {
-                widget.classList.remove('hidden');
-                widget.classList.add('flex');
-            }
-            const titleEl = document.getElementById('music-title');
-            if (titleEl) {
-                titleEl.textContent = title;
-            }
-            
-            if (window.currentMusicIndex === 0) {
-                handleCompletion(window.currentMusicMsgId, `🎶 **Now Playing:** ${title}\n\nI've connected to Nexus Music and started your track in the background. You can control it using the widget!`);
-            } else {
-                // If it's a fallback, silently update the widget to the working song
-            }
-        } else {
-            handleCompletion(window.currentMusicMsgId, "⚠️ Nexus Music player isn't ready yet. Let it load and try again.");
-        }
-    }
-
     const ytScriptTag = document.createElement('script');
     ytScriptTag.src = "https://www.youtube.com/iframe_api";
     const firstScriptTag = document.getElementsByTagName('script')[0];
@@ -370,35 +332,13 @@
 
     window.onYouTubeIframeAPIReady = function() {
         ytPlayer = new YT.Player('yt-player-container', {
-            height: '200',
-            width: '200',
+            height: '0',
+            width: '0',
             videoId: '',
-            playerVars: { 'autoplay': 1, 'controls': 0, 'origin': window.location.origin },
+            playerVars: { 'autoplay': 1, 'controls': 0 },
             events: {
                 'onReady': () => console.log("Nexus Music Engine Ready"),
-                'onStateChange': onPlayerStateChange,
-                'onError': (e) => {
-                    console.error("YouTube Player Error:", e.data);
-                    
-                    // Error 150/101/153 usually means playback is restricted by the copyright owner.
-                    // Fallback to the next video in the search results!
-                    if (window.currentMusicQueue && window.currentMusicIndex < window.currentMusicQueue.length - 1) {
-                        console.log(`Video blocked (Error ${e.data}). Trying next search result...`);
-                        window.currentMusicIndex++;
-                        playCurrentMusic();
-                    } else {
-                        const titleEl = document.getElementById('music-title');
-                        if (titleEl) titleEl.textContent = "Playback Error (" + e.data + ")";
-                        const disc = document.getElementById('music-disc');
-                        if (disc) disc.classList.remove('spin-slow');
-                        const icon = document.getElementById('music-play-icon');
-                        if (icon) icon.classList.replace('ph-pause', 'ph-play');
-                        
-                        if (window.currentMusicMsgId) {
-                            handleCompletion(window.currentMusicMsgId, `⚠️ **Nexus Music Error:** The song was blocked from background playback by its copyright owner (Error ${e.data}). Try searching for a specific lyrics or audio version!`);
-                        }
-                    }
-                }
+                'onStateChange': onPlayerStateChange
             }
         });
     };
@@ -609,7 +549,7 @@
                 // Retry logic built-in
                 for (let i = 0; i < 3; i++) {
                     try {
-                        const response = await fetch("[https://text.pollinations.ai/openai/chat/completions](https://text.pollinations.ai/openai/chat/completions)", {
+                        const response = await fetch("https://text.pollinations.ai/openai/chat/completions", {
                             method: "POST",
                             headers: { "Content-Type": "application/json" },
                             body: JSON.stringify({
@@ -902,8 +842,7 @@
                 return;
             }
 
-            // Request maxResults=5 to have fallbacks, and append 'audio' to avoid official blocked music videos
-            fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=5&q=${encodeURIComponent(query + ' audio')}&type=video&videoEmbeddable=true&key=${YOUTUBE_API_KEY}`)
+            fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(query)}&type=video&key=${YOUTUBE_API_KEY}`)
             .then(async res => {
                 const data = await res.json();
                 if (!res.ok || data.error) {
@@ -913,11 +852,20 @@
             })
             .then(data => {
                 if (data.items && data.items.length > 0) {
-                    window.currentMusicQueue = data.items;
-                    window.currentMusicIndex = 0;
-                    window.currentMusicMsgId = msgId;
+                    const videoId = data.items[0].id.videoId;
+                    const title = data.items[0].snippet.title;
                     
-                    playCurrentMusic();
+                    if (ytPlayer && ytPlayer.loadVideoById) {
+                        ytPlayer.loadVideoById(videoId);
+                        const widget = document.getElementById('nexus-music-widget');
+                        if(widget) widget.classList.remove('hidden');
+                        if(widget) widget.classList.add('flex');
+                        document.getElementById('music-title').textContent = title;
+                        
+                        handleCompletion(msgId, `🎶 **Now Playing:** ${title}\n\nI've connected to Nexus Music and started your track in the background. You can control it using the widget!`);
+                    } else {
+                        handleCompletion(msgId, "⚠️ Nexus Music player isn't ready yet. Let it load and try again.");
+                    }
                 } else {
                     handleCompletion(msgId, `❌ Couldn't find any songs matching "${query}".`);
                 }
