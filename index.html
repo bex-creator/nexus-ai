@@ -7,8 +7,9 @@
   
   <!-- PWA Meta Tags & Inline Manifest -->
   <meta name="theme-color" content="#131314">
-  <link rel="apple-touch-icon" href="https://api.dicebear.com/7.x/bottts/svg?seed=NexusUser">
+  <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%234285f4'/%3E%3Cstop offset='50%25' stop-color='%239b72cb'/%3E%3Cstop offset='100%25' stop-color='%23d96570'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath fill='url(%23g)' d='M228.89,114.73l-68-24.64-24.64-68a16,16,0,0,0-30.12,0l-24.64,68-68,24.64a16,16,0,0,0,0,30.12l68,24.64,24.64,68a16,16,0,0,0,30.12,0l24.64-68,68-24.64a16,16,0,0,0,0-30.12Z'/%3E%3C/svg%3E">
   <script>
+    const sparkleURI = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%234285f4'/%3E%3Cstop offset='50%25' stop-color='%239b72cb'/%3E%3Cstop offset='100%25' stop-color='%23d96570'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath fill='url(%23g)' d='M228.89,114.73l-68-24.64-24.64-68a16,16,0,0,0-30.12,0l-24.64,68-68,24.64a16,16,0,0,0,0,30.12l68,24.64,24.64,68a16,16,0,0,0,30.12,0l24.64-68,68-24.64a16,16,0,0,0,0-30.12Z'/%3E%3C/svg%3E";
     const manifestData = {
       "name": "Nexus AI Assistant",
       "short_name": "Nexus",
@@ -19,13 +20,13 @@
       "description": "Your intelligent cosmic AI companion.",
       "icons": [
         {
-          "src": "https://api.dicebear.com/7.x/bottts/svg?seed=NexusUser&backgroundColor=transparent",
+          "src": sparkleURI,
           "sizes": "192x192",
           "type": "image/svg+xml",
           "purpose": "any maskable"
         },
         {
-          "src": "https://api.dicebear.com/7.x/bottts/svg?seed=NexusUser&backgroundColor=transparent",
+          "src": sparkleURI,
           "sizes": "512x512",
           "type": "image/svg+xml"
         }
@@ -381,8 +382,8 @@
         if (event.origin !== "https://www.youtube-nocookie.com" && event.origin !== "https://www.youtube.com") return;
         try {
             const data = JSON.parse(event.data);
-            // playerState 0 means "Ended"
-            if (data.event === 'infoDelivery' && data.info && data.info.playerState === 0) {
+            // Auto-skip if video ended (playerState 0) OR if the embed is blocked/errors out (onError)
+            if (data.event === 'onError' || (data.event === 'infoDelivery' && data.info && data.info.playerState === 0)) {
                 playNextInPlaylist();
             }
         } catch (e) {}
