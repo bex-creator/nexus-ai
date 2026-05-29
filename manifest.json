@@ -1,0 +1,17 @@
+{
+  "name": "Nexus AI Assistant",
+  "short_name": "Nexus",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#131314",
+  "theme_color": "#131314",
+  "description": "Your intelligent cosmic AI companion.",
+  "icons": [
+    {
+      "src": "https://api.dicebear.com/7.x/bottts/svg?seed=NexusUser&backgroundColor=transparent",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
