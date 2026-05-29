@@ -1,14 +1,11 @@
-const CACHE_NAME = 'nexus-cache-v3';
+const CACHE_NAME = 'nexus-cache-v4';
 const urlsToCache = [
     '/',
     './index.html', // Make sure this matches your main HTML file's name
     './manifest.json',
     'https://cdn.tailwindcss.com',
     'https://unpkg.com/@phosphor-icons/web',
-    'https://cdn.jsdelivr.net/npm/marked/marked.min.js',
-    // Cache the new PWA icons so they load offline
-    'https://api.dicebear.com/7.x/bottts/svg?seed=CosmicNexus&backgroundColor=transparent',
-    'https://api.dicebear.com/7.x/bottts/svg?seed=CosmicNexus&backgroundColor=1e1f20'
+    'https://cdn.jsdelivr.net/npm/marked/marked.min.js'
 ];
 
 // Install Event - Cache essential files
@@ -19,6 +16,8 @@ self.addEventListener('install', event => {
             return cache.addAll(urlsToCache);
         })
     );
+    // Force the waiting service worker to become the active service worker immediately.
+    self.skipWaiting();
 });
 
 // Fetch Event - Serve from cache if available, otherwise fetch from network
@@ -54,4 +53,6 @@ self.addEventListener('activate', event => {
             );
         })
     );
+    // Tell the active service worker to take control of the page immediately.
+    return self.clients.claim();
 });
