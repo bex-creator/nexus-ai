@@ -377,13 +377,35 @@
         }
     }
 
+    // Force the iframe to broadcast its state changes
+    const ytIframe = document.getElementById('yt-player-iframe');
+    if (ytIframe) {
+        ytIframe.addEventListener('load', function() {
+            if (this.contentWindow) {
+                this.contentWindow.postMessage(JSON.stringify({event: 'listening'}), '*');
+            }
+        });
+    }
+
     // Listen for YouTube Iframe messages to detect when a song ends and auto-play the next one
     window.addEventListener('message', function(event) {
         if (event.origin !== "https://www.youtube-nocookie.com" && event.origin !== "https://www.youtube.com") return;
         try {
-            const data = JSON.parse(event.data);
+            const data = typeof event.data === 'string' ? JSON.parse(event.data) : event.data;
+            
+            // Re-initialize listening if the iframe resets
+            if (data.event === 'initialDelivery') {
+                const iframe = document.getElementById('yt-player-iframe');
+                if (iframe && iframe.contentWindow) {
+                    iframe.contentWindow.postMessage(JSON.stringify({event: 'listening'}), '*');
+                }
+            }
+
             // Auto-skip if video ended (playerState 0) OR if the embed is blocked/errors out (onError)
-            if (data.event === 'onError' || (data.event === 'infoDelivery' && data.info && data.info.playerState === 0)) {
+            const isEnded = (data.event === 'onStateChange' && data.info === 0) || 
+                            (data.event === 'infoDelivery' && data.info && data.info.playerState === 0);
+                            
+            if (data.event === 'onError' || isEnded) {
                 playNextInPlaylist();
             }
         } catch (e) {}
