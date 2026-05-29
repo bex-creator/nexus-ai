@@ -281,9 +281,43 @@
             <p class="text-[10px] font-bold text-slate-400 dark:text-zinc-400 uppercase tracking-widest leading-none mb-1">Nexus Music</p>
             <p id="music-title" class="text-sm font-bold text-slate-800 dark:text-zinc-100 truncate">Not Playing</p>
         </div>
+        
+        <!-- Settings Button -->
+        <button data-click="toggleMusicSettings" class="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-600 dark:text-zinc-400 dark:hover:text-zinc-200 transition-colors flex-shrink-0">
+            <i class="ph-fill ph-sliders text-lg"></i>
+        </button>
+        
         <button data-click="toggleMusic" class="w-10 h-10 rounded-full bg-slate-100 dark:bg-zinc-700 flex items-center justify-center text-slate-600 dark:text-zinc-300 hover:bg-slate-200 dark:hover:bg-zinc-600 transition-colors flex-shrink-0">
             <i id="music-play-icon" class="ph-fill ph-pause text-xl"></i>
         </button>
+
+        <!-- Settings Panel -->
+        <div id="music-settings-panel" class="absolute bottom-[110%] right-0 bg-white/95 dark:bg-zinc-800/95 backdrop-blur-xl border border-slate-200 dark:border-zinc-700 rounded-2xl p-4 shadow-2xl hidden flex-col gap-4 w-64 transform origin-bottom-right transition-all z-50">
+            <div class="flex items-center justify-between mb-1">
+                <h4 class="text-xs font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">Audio Settings</h4>
+                <button data-click="toggleMusicSettings" class="text-slate-400 hover:text-slate-600 dark:hover:text-zinc-300"><i class="ph-bold ph-x"></i></button>
+            </div>
+            
+            <!-- Quality Toggle -->
+            <div class="flex justify-between items-center">
+                <span class="text-sm font-medium text-slate-700 dark:text-zinc-200">HD Audio Bitrate</span>
+                <button data-click="toggleMaxQuality" id="max-quality-toggle" class="w-8 h-4 bg-emerald-500 rounded-full relative transition-colors shadow-inner">
+                    <span class="absolute right-1 top-0.5 w-3 h-3 bg-white rounded-full transition-all shadow-sm"></span>
+                </button>
+            </div>
+
+            <!-- Presets -->
+            <div class="space-y-1.5">
+                <span class="text-sm font-medium text-slate-700 dark:text-zinc-200">EQ Presets</span>
+                <select disabled class="w-full bg-slate-100 dark:bg-zinc-700/50 text-sm rounded-lg p-2 text-slate-500 dark:text-zinc-400 opacity-60 cursor-not-allowed border border-slate-200 dark:border-zinc-700" title="EQ Presets require local audio files due to YouTube CORS security restrictions.">
+                    <option>Flat (Default)</option>
+                    <option>Bass Boost</option>
+                    <option>Lo-Fi Muffled</option>
+                    <option>Vocal Enhancer</option>
+                </select>
+                <p class="text-[9.5px] text-slate-400 dark:text-zinc-500 leading-tight mt-1">*Advanced EQ requires local audio files. Browser CORS security prevents modifying external streams.</p>
+            </div>
+        </div>
     </div>
 
     <!-- Input Container -->
@@ -365,6 +399,14 @@
     let currentPlayingTrack = null;
     let savedPlaylists = JSON.parse(localStorage.getItem('nexus_playlists') || '{}');
 
+    // Helper to generate iframe URL with dynamic quality
+    function getYouTubeEmbedUrl(videoId) {
+        const toggle = document.getElementById('max-quality-toggle');
+        const isHq = toggle ? toggle.classList.contains('bg-emerald-500') : true;
+        const qualityParam = isHq ? "&vq=hd1080" : ""; // Forces HD for better audio bitrate
+        return `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&controls=0&disablekb=1&enablejsapi=1${qualityParam}`;
+    }
+
     // Helper to send raw commands to the iframe without needing the external YouTube script
     function sendIframeCommand(command) {
         const iframe = document.getElementById('yt-player-iframe');
@@ -420,7 +462,7 @@
             
             const iframe = document.getElementById('yt-player-iframe');
             if (iframe) {
-                iframe.src = `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&controls=0&disablekb=1&enablejsapi=1`;
+                iframe.src = getYouTubeEmbedUrl(videoId);
                 document.getElementById('music-title').textContent = title;
                 currentPlayingTrack = { videoId, title };
                 isMusicPlaying = true;
@@ -952,7 +994,7 @@
                         
                         const iframe = document.getElementById('yt-player-iframe');
                         if (iframe) {
-                            iframe.src = `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&controls=0&disablekb=1&enablejsapi=1`;
+                            iframe.src = getYouTubeEmbedUrl(videoId);
                             
                             const widget = document.getElementById('nexus-music-widget');
                             if(widget) {
@@ -1005,7 +1047,7 @@
                         
                         const iframe = document.getElementById('yt-player-iframe');
                         if (iframe) {
-                            iframe.src = `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&controls=0&disablekb=1&enablejsapi=1`;
+                            iframe.src = getYouTubeEmbedUrl(videoId);
                             
                             const widget = document.getElementById('nexus-music-widget');
                             if(widget) {
@@ -1092,7 +1134,7 @@
                 
                 const iframe = document.getElementById('yt-player-iframe');
                 if (iframe) {
-                    iframe.src = `https://www.youtube-nocookie.com/embed/${track.videoId}?autoplay=1&controls=0&disablekb=1&enablejsapi=1`;
+                    iframe.src = getYouTubeEmbedUrl(track.videoId);
                     
                     const widget = document.getElementById('nexus-music-widget');
                     if(widget) {
@@ -1414,6 +1456,39 @@
               sendIframeCommand('playVideo');
               isMusicPlaying = true;
               e.target.closest('button').querySelector('i').classList.replace('ph-play', 'ph-pause');
+          }
+      }
+      else if (action === 'toggleMusicSettings') {
+          const panel = document.getElementById('music-settings-panel');
+          if (panel) {
+              if (panel.classList.contains('hidden')) {
+                  panel.classList.remove('hidden');
+                  panel.classList.add('flex');
+              } else {
+                  panel.classList.add('hidden');
+                  panel.classList.remove('flex');
+              }
+          }
+      }
+      else if (action === 'toggleMaxQuality') {
+          const toggle = e.target.closest('button');
+          const dot = toggle.querySelector('span');
+          const isEnabled = toggle.classList.contains('bg-emerald-500');
+          
+          if (isEnabled) {
+              toggle.classList.replace('bg-emerald-500', 'bg-slate-300');
+              toggle.classList.add('dark:bg-zinc-600');
+              dot.classList.replace('right-1', 'left-1');
+          } else {
+              toggle.classList.replace('bg-slate-300', 'bg-emerald-500');
+              toggle.classList.remove('dark:bg-zinc-600');
+              dot.classList.replace('left-1', 'right-1');
+          }
+          
+          // Hot-reload current track to apply the new quality setting
+          if (currentPlayingTrack && isMusicPlaying) {
+              const iframe = document.getElementById('yt-player-iframe');
+              if (iframe) iframe.src = getYouTubeEmbedUrl(currentPlayingTrack.videoId);
           }
       }
     });
