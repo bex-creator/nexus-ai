@@ -329,8 +329,6 @@
     let isMusicPlaying = false;
     let currentPlaylist = [];
     let currentPlayIndex = 0;
-    let currentPlayingTrack = null;
-    let savedPlaylists = JSON.parse(localStorage.getItem('nexus_playlists') || '{}');
 
     // Helper to send raw commands to the iframe without needing the external YouTube script
     function sendIframeCommand(command) {
@@ -341,43 +339,6 @@
                 func: command,
                 args: []
             }), '*');
-        }
-    }
-
-    // Listen for YouTube Iframe messages to detect when a song ends and auto-play the next one
-    window.addEventListener('message', function(event) {
-        if (event.origin !== "https://www.youtube-nocookie.com" && event.origin !== "https://www.youtube.com") return;
-        try {
-            const data = JSON.parse(event.data);
-            // playerState 0 means "Ended"
-            if (data.event === 'infoDelivery' && data.info && data.info.playerState === 0) {
-                playNextInPlaylist();
-            }
-        } catch (e) {}
-    });
-
-    function playNextInPlaylist() {
-        if (currentPlaylist && currentPlayIndex < currentPlaylist.length - 1) {
-            currentPlayIndex++;
-            const nextTrack = currentPlaylist[currentPlayIndex];
-            const videoId = nextTrack.videoId || (nextTrack.id && nextTrack.id.videoId);
-            const title = nextTrack.title || (nextTrack.snippet && nextTrack.snippet.title);
-            
-            const iframe = document.getElementById('yt-player-iframe');
-            if (iframe) {
-                iframe.src = `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&controls=0&disablekb=1&enablejsapi=1`;
-                document.getElementById('music-title').textContent = title;
-                currentPlayingTrack = { videoId, title };
-                isMusicPlaying = true;
-                document.getElementById('music-play-icon').classList.replace('ph-play', 'ph-pause');
-            }
-        } else {
-            isMusicPlaying = false;
-            const icon = document.getElementById('music-play-icon');
-            const disc = document.getElementById('music-disc');
-            if (icon) icon.classList.replace('ph-pause', 'ph-play');
-            if (disc) disc.classList.remove('spin-slow');
-            document.getElementById('music-title').textContent = "End of Playlist";
         }
     }
 
@@ -573,7 +534,7 @@
                 // Retry logic built-in
                 for (let i = 0; i < 3; i++) {
                     try {
-                        const response = await fetch("[https://text.pollinations.ai/openai/chat/completions](https://text.pollinations.ai/openai/chat/completions)", {
+                        const response = await fetch("https://text.pollinations.ai/openai/chat/completions", {
                             method: "POST",
                             headers: { "Content-Type": "application/json" },
                             body: JSON.stringify({
@@ -857,7 +818,8 @@
         
         if (lowerInput.startsWith('play ')) {
             const query = userText.substring(5).trim();
-            const playlistIdMatch = query.match(/[?&]list=([a-zA-Z0-9_-]+)/);
+            const searchQuery = query + " lyrics";
+            handleTokenUpdate(msgId, "Connecting to Nexus Music... 🎵\n\nSearching for `" + query + "`...");
 
             if (!YOUTUBE_API_KEY || YOUTUBE_API_KEY === "YOUR_YOUTUBE_API_KEY_HERE") {
                 setTimeout(() => {
@@ -866,122 +828,56 @@
                 return;
             }
 
-            // Branch 1: The user provided a YouTube Playlist Link
-            if (playlistIdMatch) {
-                const playlistId = playlistIdMatch[1];
-                handleTokenUpdate(msgId, "Connecting to Nexus Music... 🎵\n\nFetching your YouTube playlist...");
-
-                fetch(`https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&maxResults=50&playlistId=${playlistId}&key=${YOUTUBE_API_KEY}`)
-                .then(async res => {
-                    const data = await res.json();
-                    if (!res.ok || data.error) throw new Error(data.error?.message || "YouTube API request failed.");
-                    return data;
-                })
-                .then(data => {
-                    if (data.items && data.items.length > 0) {
-                        // Standardize the response format to match regular search results
-                        currentPlaylist = data.items.map(item => ({
-                            id: { videoId: item.snippet.resourceId.videoId },
-                            snippet: { title: item.snippet.title }
-                        })).filter(item => item.snippet.title !== "Private video" && item.snippet.title !== "Deleted video");
-
-                        if (currentPlaylist.length === 0) {
-                            handleCompletion(msgId, "❌ Playlist loaded, but all videos are private or deleted.");
-                            return;
-                        }
-
-                        currentPlayIndex = 0;
-                        const track = currentPlaylist[0];
-                        const videoId = track.id.videoId;
-                        const title = track.snippet.title;
+            fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(searchQuery)}&type=video&videoEmbeddable=true&key=${YOUTUBE_API_KEY}`)
+            .then(async res => {
+                const data = await res.json();
+                if (!res.ok || data.error) {
+                    throw new Error(data.error?.message || "YouTube API request failed.");
+                }
+                return data;
+            })
+            .then(data => {
+                if (data.items && data.items.length > 0) {
+                    currentPlaylist = data.items;
+                    currentPlayIndex = 0;
+                    
+                    const videoId = currentPlaylist[0].id.videoId;
+                    const title = currentPlaylist[0].snippet.title;
+                    
+                    // Direct iframe embedding (works reliably on restricted networks)
+                    const iframe = document.getElementById('yt-player-iframe');
+                    if (iframe) {
+                        // Using youtube-nocookie to bypass strict privacy/network blocks and enablejsapi for manual control
+                        iframe.src = `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&controls=0&disablekb=1&enablejsapi=1`;
                         
-                        const iframe = document.getElementById('yt-player-iframe');
-                        if (iframe) {
-                            iframe.src = `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&controls=0&disablekb=1&enablejsapi=1`;
-                            
-                            const widget = document.getElementById('nexus-music-widget');
-                            if(widget) {
-                                widget.classList.remove('hidden');
-                                widget.classList.add('flex');
-                            }
-                            
-                            const disc = document.getElementById('music-disc');
-                            const wrapper = document.getElementById('yt-player-wrapper');
-                            const playIcon = document.getElementById('music-play-icon');
-                            
-                            if (disc) disc.classList.add('hidden');
-                            if (wrapper) wrapper.classList.remove('hidden');
-                            if (playIcon) playIcon.classList.replace('ph-play', 'ph-pause');
-
-                            document.getElementById('music-title').textContent = title;
-                            isMusicPlaying = true;
-                            currentPlayingTrack = { videoId, title };
-                            
-                            handleCompletion(msgId, `🎶 **Imported YouTube Playlist:** Loaded ${currentPlaylist.length} tracks.\n\nNow Playing: **${title}**\n\n*(Type **"skip track"** to jump to the next song in the playlist, or **"save to [name]"** to save it locally!)*`);
+                        const widget = document.getElementById('nexus-music-widget');
+                        if(widget) {
+                            widget.classList.remove('hidden');
+                            widget.classList.add('flex');
                         }
+                        
+                        const disc = document.getElementById('music-disc');
+                        const wrapper = document.getElementById('yt-player-wrapper');
+                        const playIcon = document.getElementById('music-play-icon');
+                        
+                        if (disc) disc.classList.add('hidden');
+                        if (wrapper) wrapper.classList.remove('hidden');
+                        if (playIcon) playIcon.classList.replace('ph-play', 'ph-pause');
+
+                        document.getElementById('music-title').textContent = title;
+                        isMusicPlaying = true;
+                        
+                        handleCompletion(msgId, `🎶 **Now Playing:** ${title}\n\nI've connected to Nexus Music and started your track in the background. You can control it using the widget!`);
                     } else {
-                        handleCompletion(msgId, `❌ Couldn't find any public videos in that playlist. Ensure the playlist is Public or Unlisted.`);
+                        handleCompletion(msgId, "⚠️ Nexus Music player isn't ready yet. Let it load and try again.");
                     }
-                })
-                .catch(err => {
-                    handleCompletion(msgId, `⚠️ **Nexus Music Error:** Could not load YouTube playlist.\n\nError details: ${err.message}`);
-                });
-
-            } else {
-                // Branch 2: Standard text search query
-                const searchQuery = query + " lyrics";
-                handleTokenUpdate(msgId, "Connecting to Nexus Music... 🎵\n\nSearching for `" + query + "`...");
-
-                fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(searchQuery)}&type=video&videoEmbeddable=true&key=${YOUTUBE_API_KEY}`)
-                .then(async res => {
-                    const data = await res.json();
-                    if (!res.ok || data.error) {
-                        throw new Error(data.error?.message || "YouTube API request failed.");
-                    }
-                    return data;
-                })
-                .then(data => {
-                    if (data.items && data.items.length > 0) {
-                        currentPlaylist = data.items;
-                        currentPlayIndex = 0;
-                        
-                        const videoId = currentPlaylist[0].id.videoId;
-                        const title = currentPlaylist[0].snippet.title;
-                        
-                        const iframe = document.getElementById('yt-player-iframe');
-                        if (iframe) {
-                            iframe.src = `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&controls=0&disablekb=1&enablejsapi=1`;
-                            
-                            const widget = document.getElementById('nexus-music-widget');
-                            if(widget) {
-                                widget.classList.remove('hidden');
-                                widget.classList.add('flex');
-                            }
-                            
-                            const disc = document.getElementById('music-disc');
-                            const wrapper = document.getElementById('yt-player-wrapper');
-                            const playIcon = document.getElementById('music-play-icon');
-                            
-                            if (disc) disc.classList.add('hidden');
-                            if (wrapper) wrapper.classList.remove('hidden');
-                            if (playIcon) playIcon.classList.replace('ph-play', 'ph-pause');
-
-                            document.getElementById('music-title').textContent = title;
-                            isMusicPlaying = true;
-                            currentPlayingTrack = { videoId, title };
-                            
-                            handleCompletion(msgId, `🎶 **Now Playing:** ${title}\n\nWould you like to save this track?\n* Type **"save to [playlist name]"** to save it for later.\n* Type **"play playlist [name]"** to listen to saved playlists.`);
-                        } else {
-                            handleCompletion(msgId, "⚠️ Nexus Music player isn't ready yet. Let it load and try again.");
-                        }
-                    } else {
-                        handleCompletion(msgId, `❌ Couldn't find any songs matching "${query}".`);
-                    }
-                })
-                .catch(err => {
-                    handleCompletion(msgId, `⚠️ **Nexus Music Error:** The YouTube API rejected the request.\n\nError details: ${err.message}\n\n*Note: If you are running this app on GitHub Pages, make sure your Google Cloud API key restrictions allow requests from your GitHub Pages URL.*`);
-                });
-            }
+                } else {
+                    handleCompletion(msgId, `❌ Couldn't find any songs matching "${query}".`);
+                }
+            })
+            .catch(err => {
+                handleCompletion(msgId, `⚠️ **Nexus Music Error:** The YouTube API rejected the request.\n\nError details: ${err.message}\n\n*Note: If you are running this app on GitHub Pages, make sure your Google Cloud API key restrictions allow requests from your GitHub Pages URL.*`);
+            });
             return;
         } else if (lowerInput === 'pause music' || lowerInput === 'stop music') {
             sendIframeCommand('pauseVideo');
@@ -1001,100 +897,6 @@
             setTimeout(() => {
                 handleTokenUpdate(msgId, "Music resumed. ▶️");
                 handleCompletion(msgId, "Music resumed. ▶️");
-            }, 300);
-            return;
-        } else if (lowerInput.startsWith('save to ')) {
-            const playlistName = lowerInput.substring(8).trim().toLowerCase();
-            if (!currentPlayingTrack) {
-                setTimeout(() => {
-                    handleTokenUpdate(msgId, "There is no track currently playing to save!");
-                    handleCompletion(msgId, "There is no track currently playing to save!");
-                }, 300);
-                return;
-            }
-            if (!savedPlaylists[playlistName]) {
-                savedPlaylists[playlistName] = [];
-            }
-            // Avoid duplicates
-            const exists = savedPlaylists[playlistName].find(t => t.videoId === currentPlayingTrack.videoId);
-            if (!exists) {
-                savedPlaylists[playlistName].push(currentPlayingTrack);
-                localStorage.setItem('nexus_playlists', JSON.stringify(savedPlaylists));
-            }
-            
-            const msg = `✅ Saved **${currentPlayingTrack.title}** to your **"${playlistName}"** playlist!`;
-            setTimeout(() => {
-                handleTokenUpdate(msgId, msg);
-                handleCompletion(msgId, msg);
-            }, 300);
-            return;
-        } else if (lowerInput.startsWith('play playlist ')) {
-            const playlistName = lowerInput.substring(14).trim().toLowerCase();
-            if (savedPlaylists[playlistName] && savedPlaylists[playlistName].length > 0) {
-                currentPlaylist = savedPlaylists[playlistName];
-                currentPlayIndex = 0;
-                const track = currentPlaylist[0];
-                
-                const iframe = document.getElementById('yt-player-iframe');
-                if (iframe) {
-                    iframe.src = `https://www.youtube-nocookie.com/embed/${track.videoId}?autoplay=1&controls=0&disablekb=1&enablejsapi=1`;
-                    
-                    const widget = document.getElementById('nexus-music-widget');
-                    if(widget) {
-                        widget.classList.remove('hidden');
-                        widget.classList.add('flex');
-                    }
-                    
-                    const disc = document.getElementById('music-disc');
-                    const wrapper = document.getElementById('yt-player-wrapper');
-                    const playIcon = document.getElementById('music-play-icon');
-                    
-                    if (disc) disc.classList.add('hidden');
-                    if (wrapper) wrapper.classList.remove('hidden');
-                    if (playIcon) playIcon.classList.replace('ph-play', 'ph-pause');
-
-                    document.getElementById('music-title').textContent = track.title;
-                    isMusicPlaying = true;
-                    currentPlayingTrack = track;
-                    
-                    let msg = `🎶 **Now Playing Playlist:** ${playlistName} (${currentPlaylist.length} tracks)\n\nStarting with: **${track.title}**\n\n*(Type **"skip track"** to go to the next song)*`;
-                    setTimeout(() => {
-                        handleTokenUpdate(msgId, msg);
-                        handleCompletion(msgId, msg);
-                    }, 400);
-                }
-            } else {
-                const msg = `❌ Couldn't find a playlist named "${playlistName}" or it is empty.`;
-                setTimeout(() => {
-                    handleTokenUpdate(msgId, msg);
-                    handleCompletion(msgId, msg);
-                }, 300);
-            }
-            return;
-        } else if (lowerInput === 'my playlists' || lowerInput === 'show playlists') {
-            const keys = Object.keys(savedPlaylists);
-            if (keys.length === 0) {
-                 const msg = `You don't have any saved playlists yet! Start playing a song and type **"save to [name]"** to create one.`;
-                 setTimeout(() => { handleTokenUpdate(msgId, msg); handleCompletion(msgId, msg); }, 300);
-            } else {
-                 let msg = `🎵 **Your Playlists:**\n\n`;
-                 keys.forEach(k => {
-                     msg += `* **${k}** (${savedPlaylists[k].length} tracks)\n`;
-                 });
-                 msg += `\nType **"play playlist [name]"** to listen!`;
-                 setTimeout(() => { handleTokenUpdate(msgId, msg); handleCompletion(msgId, msg); }, 300);
-            }
-            return;
-        } else if (lowerInput === 'skip track' || lowerInput === 'next track') {
-            setTimeout(() => {
-                if (currentPlaylist && currentPlayIndex < currentPlaylist.length - 1) {
-                    playNextInPlaylist();
-                    handleTokenUpdate(msgId, `⏭️ Skipped to next track!`);
-                    handleCompletion(msgId, `⏭️ Skipped to next track: **${currentPlayingTrack.title}**`);
-                } else {
-                    handleTokenUpdate(msgId, `⏭️ Reached the end of the playlist.`);
-                    handleCompletion(msgId, `⏭️ Reached the end of the playlist.`);
-                }
             }, 300);
             return;
         }
