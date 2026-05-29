@@ -378,13 +378,14 @@
     }
 
     function onPlayerError(event) {
-        console.error("YouTube Player Error:", event.data);
-        // Error 150, 101, 153, or 2 usually indicate playback blocked or restricted
+        // Error 150, 101, 153, or 2 usually indicate playback blocked or restricted.
+        // We suppress the scary console error for these specific expected fallback cases.
         if (event.data === 101 || event.data === 150 || event.data === 153 || event.data === 2) {
-            console.log("Playback blocked or invalid, trying next result...");
+            console.log("Playback blocked or invalid (Code " + event.data + "), trying next result...");
             currentSearchIndex++;
             playCurrentSearchResult();
         } else {
+            console.error("YouTube Player Error:", event.data);
             if (!hasSentSuccessMessage && currentChatMsgId) {
                  handleCompletion(currentChatMsgId, `⚠️ **Nexus Music Error:** Playback failed (Code ${event.data}).`);
                  hasSentSuccessMessage = true;
