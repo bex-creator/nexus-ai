@@ -1,10 +1,14 @@
-const CACHE_NAME = 'nexus-cache-v2';
+const CACHE_NAME = 'nexus-cache-v3';
 const urlsToCache = [
     '/',
     './index.html', // Make sure this matches your main HTML file's name
+    './manifest.json',
     'https://cdn.tailwindcss.com',
     'https://unpkg.com/@phosphor-icons/web',
-    'https://cdn.jsdelivr.net/npm/marked/marked.min.js'
+    'https://cdn.jsdelivr.net/npm/marked/marked.min.js',
+    // Cache the new PWA icons so they load offline
+    'https://api.dicebear.com/7.x/bottts/svg?seed=CosmicNexus&backgroundColor=transparent',
+    'https://api.dicebear.com/7.x/bottts/svg?seed=CosmicNexus&backgroundColor=1e1f20'
 ];
 
 // Install Event - Cache essential files
