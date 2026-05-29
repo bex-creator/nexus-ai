@@ -240,8 +240,9 @@
             <i class="ph-fill ph-music-notes text-xl"></i>
         </div>
         <!-- Visible YouTube Player Container -->
-        <div id="yt-player-wrapper" class="hidden w-20 h-14 rounded-xl overflow-hidden bg-black flex-shrink-0 shadow-inner">
-            <div id="yt-player-container" class="w-full h-full pointer-events-none"></div>
+        <div id="yt-player-wrapper" class="hidden w-20 h-14 rounded-xl overflow-hidden bg-black flex-shrink-0 shadow-inner relative">
+            <!-- Replaced YT.Player div with a robust raw iframe that bypasses school script blocks -->
+            <iframe id="yt-player-iframe" class="w-full h-full pointer-events-none border-0 absolute inset-0" allow="autoplay; encrypted-media"></iframe>
         </div>
         <div class="flex-1 min-w-0">
             <p class="text-[10px] font-bold text-slate-400 dark:text-zinc-400 uppercase tracking-widest leading-none mb-1">Nexus Music</p>
@@ -321,70 +322,23 @@
 
   <!-- Logic Script -->
   <script>
-    // --- NEXUS MUSIC / YOUTUBE API SETUP ---
-    const YOUTUBE_API_KEY = "AIzaSyCv-PkVUG0IIVLrLv1xV3hpUE2P2m7tznk"; 
+    // --- NEXUS MUSIC / ROBUST IFRAME SETUP ---
+    // Using the key you provided for better school account compatibility
+    const YOUTUBE_API_KEY = "AIzaSyBFTCtKzfMfpaj3aFjFPLbaysw5atwy_LA"; 
     
-    let ytPlayer = null;
     let isMusicPlaying = false;
     let currentPlaylist = [];
     let currentPlayIndex = 0;
 
-    const ytScriptTag = document.createElement('script');
-    ytScriptTag.src = "https://www.youtube.com/iframe_api";
-    const firstScriptTag = document.getElementsByTagName('script')[0];
-    firstScriptTag.parentNode.insertBefore(ytScriptTag, firstScriptTag);
-
-    window.onYouTubeIframeAPIReady = function() {
-        ytPlayer = new YT.Player('yt-player-container', {
-            height: '100%',
-            width: '100%',
-            videoId: '',
-            playerVars: { 
-                'autoplay': 1, 
-                'controls': 0, 
-                'disablekb': 1,
-                'enablejsapi': 1
-            },
-            events: {
-                'onReady': () => console.log("Nexus Music Engine Ready"),
-                'onStateChange': onPlayerStateChange,
-                'onError': onPlayerError
-            }
-        });
-    };
-
-    function onPlayerError(event) {
-        console.warn("YouTube Player Error:", event.data);
-        // Error 101/150 means the video owner disabled embedding. 
-        // Automatically try the next video in our search results!
-        if (currentPlaylist && currentPlayIndex < currentPlaylist.length - 1) {
-            currentPlayIndex++;
-            const nextVideo = currentPlaylist[currentPlayIndex];
-            if (ytPlayer && ytPlayer.loadVideoById) {
-                ytPlayer.loadVideoById(nextVideo.id.videoId);
-                document.getElementById('music-title').textContent = nextVideo.snippet.title;
-            }
-        } else {
-            // Reached the end of the results
-            document.getElementById('music-title').textContent = "Track Unavailable";
-            const disc = document.getElementById('music-disc');
-            const icon = document.getElementById('music-play-icon');
-            if (disc) disc.classList.remove('spin-slow');
-            if (icon) icon.classList.replace('ph-pause', 'ph-play');
-        }
-    }
-
-    function onPlayerStateChange(event) {
-        const disc = document.getElementById('music-disc');
-        const icon = document.getElementById('music-play-icon');
-        if (event.data == YT.PlayerState.PLAYING) {
-            isMusicPlaying = true;
-            disc.classList.add('spin-slow');
-            icon.classList.replace('ph-play', 'ph-pause');
-        } else {
-            isMusicPlaying = false;
-            disc.classList.remove('spin-slow');
-            icon.classList.replace('ph-pause', 'ph-play');
+    // Helper to send raw commands to the iframe without needing the external YouTube script
+    function sendIframeCommand(command) {
+        const iframe = document.getElementById('yt-player-iframe');
+        if (iframe && iframe.contentWindow) {
+            iframe.contentWindow.postMessage(JSON.stringify({
+                event: 'command',
+                func: command,
+                args: []
+            }), '*');
         }
     }
 
@@ -890,8 +844,12 @@
                     const videoId = currentPlaylist[0].id.videoId;
                     const title = currentPlaylist[0].snippet.title;
                     
-                    if (ytPlayer && ytPlayer.loadVideoById) {
-                        ytPlayer.loadVideoById(videoId);
+                    // Direct iframe embedding (works reliably on restricted networks)
+                    const iframe = document.getElementById('yt-player-iframe');
+                    if (iframe) {
+                        // Using youtube-nocookie to bypass strict privacy/network blocks and enablejsapi for manual control
+                        iframe.src = `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&controls=0&disablekb=1&enablejsapi=1`;
+                        
                         const widget = document.getElementById('nexus-music-widget');
                         if(widget) {
                             widget.classList.remove('hidden');
@@ -900,10 +858,14 @@
                         
                         const disc = document.getElementById('music-disc');
                         const wrapper = document.getElementById('yt-player-wrapper');
+                        const playIcon = document.getElementById('music-play-icon');
+                        
                         if (disc) disc.classList.add('hidden');
                         if (wrapper) wrapper.classList.remove('hidden');
+                        if (playIcon) playIcon.classList.replace('ph-play', 'ph-pause');
 
                         document.getElementById('music-title').textContent = title;
+                        isMusicPlaying = true;
                         
                         handleCompletion(msgId, `🎶 **Now Playing:** ${title}\n\nI've connected to Nexus Music and started your track in the background. You can control it using the widget!`);
                     } else {
@@ -918,14 +880,20 @@
             });
             return;
         } else if (lowerInput === 'pause music' || lowerInput === 'stop music') {
-            if (ytPlayer && ytPlayer.pauseVideo) ytPlayer.pauseVideo();
+            sendIframeCommand('pauseVideo');
+            isMusicPlaying = false;
+            document.getElementById('music-play-icon').classList.replace('ph-pause', 'ph-play');
+            
             setTimeout(() => {
                 handleTokenUpdate(msgId, "Music paused. ⏸️");
                 handleCompletion(msgId, "Music paused. ⏸️");
             }, 300);
             return;
         } else if (lowerInput === 'resume music') {
-            if (ytPlayer && ytPlayer.playVideo) ytPlayer.playVideo();
+            sendIframeCommand('playVideo');
+            isMusicPlaying = true;
+            document.getElementById('music-play-icon').classList.replace('ph-play', 'ph-pause');
+            
             setTimeout(() => {
                 handleTokenUpdate(msgId, "Music resumed. ▶️");
                 handleCompletion(msgId, "Music resumed. ▶️");
@@ -1185,13 +1153,14 @@
         }
       }
       else if (action === 'toggleMusic') {
-          if (ytPlayer && ytPlayer.getPlayerState) {
-              const state = ytPlayer.getPlayerState();
-              if (state === YT.PlayerState.PLAYING) {
-                  ytPlayer.pauseVideo();
-              } else {
-                  ytPlayer.playVideo();
-              }
+          if (isMusicPlaying) {
+              sendIframeCommand('pauseVideo');
+              isMusicPlaying = false;
+              e.target.closest('button').querySelector('i').classList.replace('ph-pause', 'ph-play');
+          } else {
+              sendIframeCommand('playVideo');
+              isMusicPlaying = true;
+              e.target.closest('button').querySelector('i').classList.replace('ph-play', 'ph-pause');
           }
       }
     });
