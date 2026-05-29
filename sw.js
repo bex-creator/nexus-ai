@@ -1,11 +1,13 @@
-const CACHE_NAME = 'nexus-cache-v4';
+const CACHE_NAME = 'nexus-cache-v5';
 const urlsToCache = [
     '/',
-    './index.html', // Make sure this matches your main HTML file's name
+    './index.html', 
     './manifest.json',
     'https://cdn.tailwindcss.com',
     'https://unpkg.com/@phosphor-icons/web',
-    'https://cdn.jsdelivr.net/npm/marked/marked.min.js'
+    'https://cdn.jsdelivr.net/npm/marked/marked.min.js',
+    'https://api.dicebear.com/7.x/bottts/png?seed=CosmicNexus&backgroundColor=transparent',
+    'https://api.dicebear.com/7.x/bottts/png?seed=CosmicNexus&backgroundColor=1e1f20'
 ];
 
 // Install Event - Cache essential files
@@ -24,15 +26,9 @@ self.addEventListener('install', event => {
 self.addEventListener('fetch', event => {
     event.respondWith(
         caches.match(event.request).then(response => {
-            // Cache hit - return the cached response
-            if (response) {
-                return response;
-            }
-            
-            // Network request
+            if (response) { return response; }
             return fetch(event.request).catch(() => {
                 console.log('[ServiceWorker] Offline fallback triggered for:', event.request.url);
-                // Optional: You could return a specific offline.html page here if you cache one
             });
         })
     );
