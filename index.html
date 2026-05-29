@@ -326,6 +326,8 @@
     
     let ytPlayer = null;
     let isMusicPlaying = false;
+    let currentPlaylist = [];
+    let currentPlayIndex = 0;
 
     const ytScriptTag = document.createElement('script');
     ytScriptTag.src = "https://www.youtube.com/iframe_api";
@@ -341,15 +343,36 @@
                 'autoplay': 1, 
                 'controls': 0, 
                 'disablekb': 1,
-                'enablejsapi': 1,
-                'origin': window.location.origin
+                'enablejsapi': 1
             },
             events: {
                 'onReady': () => console.log("Nexus Music Engine Ready"),
-                'onStateChange': onPlayerStateChange
+                'onStateChange': onPlayerStateChange,
+                'onError': onPlayerError
             }
         });
     };
+
+    function onPlayerError(event) {
+        console.warn("YouTube Player Error:", event.data);
+        // Error 101/150 means the video owner disabled embedding. 
+        // Automatically try the next video in our search results!
+        if (currentPlaylist && currentPlayIndex < currentPlaylist.length - 1) {
+            currentPlayIndex++;
+            const nextVideo = currentPlaylist[currentPlayIndex];
+            if (ytPlayer && ytPlayer.loadVideoById) {
+                ytPlayer.loadVideoById(nextVideo.id.videoId);
+                document.getElementById('music-title').textContent = nextVideo.snippet.title;
+            }
+        } else {
+            // Reached the end of the results
+            document.getElementById('music-title').textContent = "Track Unavailable";
+            const disc = document.getElementById('music-disc');
+            const icon = document.getElementById('music-play-icon');
+            if (disc) disc.classList.remove('spin-slow');
+            if (icon) icon.classList.replace('ph-pause', 'ph-play');
+        }
+    }
 
     function onPlayerStateChange(event) {
         const disc = document.getElementById('music-disc');
@@ -861,8 +884,11 @@
             })
             .then(data => {
                 if (data.items && data.items.length > 0) {
-                    const videoId = data.items[0].id.videoId;
-                    const title = data.items[0].snippet.title;
+                    currentPlaylist = data.items;
+                    currentPlayIndex = 0;
+                    
+                    const videoId = currentPlaylist[0].id.videoId;
+                    const title = currentPlaylist[0].snippet.title;
                     
                     if (ytPlayer && ytPlayer.loadVideoById) {
                         ytPlayer.loadVideoById(videoId);
