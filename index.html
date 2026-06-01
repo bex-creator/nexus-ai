@@ -235,11 +235,11 @@
                 </div>
               </div>
 
-              <div data-click="fillSuggestion" data-arg="Explain quantum computing in simple, easy to understand terms" class="group p-5 rounded-2xl bg-white hover:bg-slate-100 dark:bg-gemini-darkCard dark:hover:bg-zinc-800/80 border border-slate-200/60 dark:border-zinc-800 cursor-pointer shadow-sm hover:shadow transition-all">
-                <p class="text-sm font-medium mb-4 text-slate-700 dark:text-zinc-300">Explain quantum computing in simple terms...</p>
+              <div data-click="fillSuggestion" data-arg="Show me a map of Tokyo, Japan" class="group p-5 rounded-2xl bg-white hover:bg-slate-100 dark:bg-gemini-darkCard dark:hover:bg-zinc-800/80 border border-slate-200/60 dark:border-zinc-800 cursor-pointer shadow-sm hover:shadow transition-all">
+                <p class="text-sm font-medium mb-4 text-slate-700 dark:text-zinc-300">Show me a map of Tokyo, Japan...</p>
                 <div class="flex justify-end">
-                  <div class="w-8 h-8 rounded-full bg-slate-100 dark:bg-zinc-700/50 group-hover:bg-[#4285f4]/10 flex items-center justify-center transition-colors">
-                    <i class="ph ph-lightbulb text-slate-500 dark:text-zinc-400 group-hover:text-[#4285f4]"></i>
+                  <div class="w-8 h-8 rounded-full bg-slate-100 dark:bg-zinc-700/50 group-hover:bg-emerald-100 dark:group-hover:bg-emerald-900/30 flex items-center justify-center transition-colors">
+                    <i class="ph ph-map-pin text-slate-500 dark:text-zinc-400 group-hover:text-emerald-500"></i>
                   </div>
                 </div>
               </div>
@@ -281,43 +281,9 @@
             <p class="text-[10px] font-bold text-slate-400 dark:text-zinc-400 uppercase tracking-widest leading-none mb-1">Nexus Music</p>
             <p id="music-title" class="text-sm font-bold text-slate-800 dark:text-zinc-100 truncate">Not Playing</p>
         </div>
-        
-        <!-- Settings Button -->
-        <button data-click="toggleMusicSettings" class="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-600 dark:text-zinc-400 dark:hover:text-zinc-200 transition-colors flex-shrink-0">
-            <i class="ph-fill ph-sliders text-lg"></i>
-        </button>
-        
         <button data-click="toggleMusic" class="w-10 h-10 rounded-full bg-slate-100 dark:bg-zinc-700 flex items-center justify-center text-slate-600 dark:text-zinc-300 hover:bg-slate-200 dark:hover:bg-zinc-600 transition-colors flex-shrink-0">
             <i id="music-play-icon" class="ph-fill ph-pause text-xl"></i>
         </button>
-
-        <!-- Settings Panel -->
-        <div id="music-settings-panel" class="absolute bottom-[110%] right-0 bg-white/95 dark:bg-zinc-800/95 backdrop-blur-xl border border-slate-200 dark:border-zinc-700 rounded-2xl p-4 shadow-2xl hidden flex-col gap-4 w-64 transform origin-bottom-right transition-all z-50">
-            <div class="flex items-center justify-between mb-1">
-                <h4 class="text-xs font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">Audio Settings</h4>
-                <button data-click="toggleMusicSettings" class="text-slate-400 hover:text-slate-600 dark:hover:text-zinc-300"><i class="ph-bold ph-x"></i></button>
-            </div>
-            
-            <!-- Quality Toggle -->
-            <div class="flex justify-between items-center">
-                <span class="text-sm font-medium text-slate-700 dark:text-zinc-200">HD Audio Bitrate</span>
-                <button data-click="toggleMaxQuality" id="max-quality-toggle" class="w-8 h-4 bg-emerald-500 rounded-full relative transition-colors shadow-inner">
-                    <span class="absolute right-1 top-0.5 w-3 h-3 bg-white rounded-full transition-all shadow-sm"></span>
-                </button>
-            </div>
-
-            <!-- Presets -->
-            <div class="space-y-1.5">
-                <span class="text-sm font-medium text-slate-700 dark:text-zinc-200">EQ Presets</span>
-                <select disabled class="w-full bg-slate-100 dark:bg-zinc-700/50 text-sm rounded-lg p-2 text-slate-500 dark:text-zinc-400 opacity-60 cursor-not-allowed border border-slate-200 dark:border-zinc-700" title="EQ Presets require local audio files due to YouTube CORS security restrictions.">
-                    <option>Flat (Default)</option>
-                    <option>Bass Boost</option>
-                    <option>Lo-Fi Muffled</option>
-                    <option>Vocal Enhancer</option>
-                </select>
-                <p class="text-[9.5px] text-slate-400 dark:text-zinc-500 leading-tight mt-1">*Advanced EQ requires local audio files. Browser CORS security prevents modifying external streams.</p>
-            </div>
-        </div>
     </div>
 
     <!-- Input Container -->
@@ -399,14 +365,6 @@
     let currentPlayingTrack = null;
     let savedPlaylists = JSON.parse(localStorage.getItem('nexus_playlists') || '{}');
 
-    // Helper to generate iframe URL with dynamic quality
-    function getYouTubeEmbedUrl(videoId) {
-        const toggle = document.getElementById('max-quality-toggle');
-        const isHq = toggle ? toggle.classList.contains('bg-emerald-500') : true;
-        const qualityParam = isHq ? "&vq=hd1080" : ""; // Forces HD for better audio bitrate
-        return `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&controls=0&disablekb=1&enablejsapi=1${qualityParam}`;
-    }
-
     // Helper to send raw commands to the iframe without needing the external YouTube script
     function sendIframeCommand(command) {
         const iframe = document.getElementById('yt-player-iframe');
@@ -419,35 +377,13 @@
         }
     }
 
-    // Force the iframe to broadcast its state changes
-    const ytIframe = document.getElementById('yt-player-iframe');
-    if (ytIframe) {
-        ytIframe.addEventListener('load', function() {
-            if (this.contentWindow) {
-                this.contentWindow.postMessage(JSON.stringify({event: 'listening'}), '*');
-            }
-        });
-    }
-
     // Listen for YouTube Iframe messages to detect when a song ends and auto-play the next one
     window.addEventListener('message', function(event) {
         if (event.origin !== "https://www.youtube-nocookie.com" && event.origin !== "https://www.youtube.com") return;
         try {
-            const data = typeof event.data === 'string' ? JSON.parse(event.data) : event.data;
-            
-            // Re-initialize listening if the iframe resets
-            if (data.event === 'initialDelivery') {
-                const iframe = document.getElementById('yt-player-iframe');
-                if (iframe && iframe.contentWindow) {
-                    iframe.contentWindow.postMessage(JSON.stringify({event: 'listening'}), '*');
-                }
-            }
-
+            const data = JSON.parse(event.data);
             // Auto-skip if video ended (playerState 0) OR if the embed is blocked/errors out (onError)
-            const isEnded = (data.event === 'onStateChange' && data.info === 0) || 
-                            (data.event === 'infoDelivery' && data.info && data.info.playerState === 0);
-                            
-            if (data.event === 'onError' || isEnded) {
+            if (data.event === 'onError' || (data.event === 'infoDelivery' && data.info && data.info.playerState === 0)) {
                 playNextInPlaylist();
             }
         } catch (e) {}
@@ -462,7 +398,7 @@
             
             const iframe = document.getElementById('yt-player-iframe');
             if (iframe) {
-                iframe.src = getYouTubeEmbedUrl(videoId);
+                iframe.src = `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&controls=0&disablekb=1&enablejsapi=1`;
                 document.getElementById('music-title').textContent = title;
                 currentPlayingTrack = { videoId, title };
                 isMusicPlaying = true;
@@ -715,7 +651,7 @@
                                             
                                             // UI Throttling: redraw the heavy markdown parser every ~30ms
                                             if (Date.now() - lastUpdate > 30) {
-                                                handleTokenUpdate(task.id, displayAnswer, task.isContinuation, task.baseText);
+                                                handleTokenUpdate(task.id, (task.prefixContent || "") + displayAnswer, task.isContinuation, task.baseText);
                                                 lastUpdate = Date.now();
                                             }
                                         }
@@ -744,7 +680,7 @@
                 if (answer.includes('--- **Support Pollinations')) answer = answer.split('--- **Support Pollinations')[0];
                 answer = answer.trim();
                 
-                handleCompletion(task.id, answer, task.isContinuation, task.baseText);
+                handleCompletion(task.id, (task.prefixContent || "") + answer, task.isContinuation, task.baseText, answer);
 
             } catch (err) {
                 handleError(task.id, String(err));
@@ -800,7 +736,7 @@
         }
     }
 
-    function handleCompletion(id, finalAnswer, isContinuation = false, baseText = "") {
+    function handleCompletion(id, finalAnswer, isContinuation = false, baseText = "", rawContextAnswer = null) {
         if (timerInterval) clearInterval(timerInterval);
         
         if (chatInput) chatInput.disabled = false;
@@ -815,10 +751,12 @@
                 window.canvasCodeBlocks = []; 
                 textNode.innerHTML = marked.parse(fullText); 
                 
+                const historyContent = rawContextAnswer !== null ? rawContextAnswer : finalAnswer;
+                
                 if (isContinuation) {
-                    chatHistoryContext[chatHistoryContext.length - 1].content = fullText;
+                    chatHistoryContext[chatHistoryContext.length - 1].content = historyContent;
                 } else {
-                    chatHistoryContext.push({ role: "assistant", content: finalAnswer });
+                    chatHistoryContext.push({ role: "assistant", content: historyContent });
                 }
                 
                 syncCanvasWithActiveBlock(true);
@@ -951,6 +889,8 @@
 
         // --- MUSIC COMMANDS INTERCEPTOR ---
         const lowerInput = userText.toLowerCase().trim();
+        let prefixHTML = "";
+        let apiMessageContent = userText;
         
         if (lowerInput.startsWith('play ')) {
             const query = userText.substring(5).trim();
@@ -994,7 +934,7 @@
                         
                         const iframe = document.getElementById('yt-player-iframe');
                         if (iframe) {
-                            iframe.src = getYouTubeEmbedUrl(videoId);
+                            iframe.src = `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&controls=0&disablekb=1&enablejsapi=1`;
                             
                             const widget = document.getElementById('nexus-music-widget');
                             if(widget) {
@@ -1047,7 +987,7 @@
                         
                         const iframe = document.getElementById('yt-player-iframe');
                         if (iframe) {
-                            iframe.src = getYouTubeEmbedUrl(videoId);
+                            iframe.src = `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&controls=0&disablekb=1&enablejsapi=1`;
                             
                             const widget = document.getElementById('nexus-music-widget');
                             if(widget) {
@@ -1134,7 +1074,7 @@
                 
                 const iframe = document.getElementById('yt-player-iframe');
                 if (iframe) {
-                    iframe.src = getYouTubeEmbedUrl(track.videoId);
+                    iframe.src = `https://www.youtube-nocookie.com/embed/${track.videoId}?autoplay=1&controls=0&disablekb=1&enablejsapi=1`;
                     
                     const widget = document.getElementById('nexus-music-widget');
                     if(widget) {
@@ -1196,6 +1136,71 @@
             return;
         }
 
+        // --- MAPS & DIRECTIONS INTERCEPTOR ---
+        const mapRegex = /^(?:show (?:me )?(?:a )?map of|map of|where is) (.+)/i;
+        const dirRegex = /^(?:give me )?(?:directions to|navigate to|how do i get to|take me to) (.+)/i;
+        
+        const mapMatch = lowerInput.match(mapRegex);
+        const dirMatch = lowerInput.match(dirRegex);
+
+        const finalizeAIRequest = () => {
+            // --- STANDARD AI PROCESSING (Visual & Text) ---
+            let messageContent = apiMessageContent;
+            if (attachedImageBase64) {
+                messageContent = [
+                    { type: "text", text: apiMessageContent || "Please analyze and explain what is in this image." },
+                    { type: "image_url", image_url: { url: attachedImageBase64 } }
+                ];
+            }
+
+            chatHistoryContext.push({ role: "user", content: messageContent });
+            if (chatHistoryContext.length > 10) chatHistoryContext = chatHistoryContext.slice(-10);
+
+            window.aiEngine.postMessage({
+                id: msgId,
+                messages: [...chatHistoryContext],
+                prefixContent: prefixHTML
+            });
+        };
+
+        if (dirMatch && dirMatch[1]) {
+            const destination = dirMatch[1].trim();
+            handleTokenUpdate(msgId, "Acquiring GPS location... 🛰️");
+            
+            if ("geolocation" in navigator) {
+                navigator.geolocation.getCurrentPosition((position) => {
+                    const lat = position.coords.latitude;
+                    const lng = position.coords.longitude;
+                    const navUrl = `https://www.google.com/maps/dir/?api=1&origin=${lat},${lng}&destination=${encodeURIComponent(destination)}`;
+                    const embedUrl = `https://maps.google.com/maps?saddr=${lat},${lng}&daddr=${encodeURIComponent(destination)}&output=embed`;
+                    
+                    prefixHTML = `<div class="mb-5 rounded-3xl overflow-hidden border border-slate-200 dark:border-zinc-700 shadow-sm relative w-full max-w-2xl bg-white dark:bg-zinc-800"><iframe width="100%" height="300" frameborder="0" style="border:0" src="${embedUrl}" allowfullscreen loading="lazy" class="w-full h-[300px] sm:h-[350px]"></iframe><div class="p-4 sm:p-5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-slate-50 dark:bg-zinc-800/80 border-t border-slate-200 dark:border-zinc-700"><div class="flex items-center gap-3"><div class="w-10 h-10 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center text-indigo-600 dark:text-indigo-400"><i class="ph-fill ph-navigation-arrow text-xl"></i></div><div><span class="block text-sm font-bold text-slate-800 dark:text-zinc-200">Live Navigation</span><span class="block text-xs text-slate-500 dark:text-zinc-400">Start driving with Google Maps</span></div></div><a href="${navUrl}" target="_blank" rel="noopener noreferrer" class="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold py-2.5 px-5 rounded-xl flex items-center justify-center gap-2 shadow-md transition-all hover:shadow-lg active:scale-95"><i class="ph-bold ph-arrow-square-out"></i> Start Route</a></div></div>\n\n`;
+                    
+                    apiMessageContent = `My exact current starting location coordinates are Latitude ${lat}, Longitude ${lng}. Provide detailed, step-by-step driving directions from this exact location to ${destination}. Format the directions nicely using bullet points.`;
+                    finalizeAIRequest();
+                }, (error) => {
+                    const embedUrl = `https://maps.google.com/maps?saddr=Current+Location&daddr=${encodeURIComponent(destination)}&output=embed`;
+                    prefixHTML = `<div class="mb-5 rounded-3xl overflow-hidden border border-slate-200 dark:border-zinc-700 shadow-sm relative h-[250px] sm:h-[300px] w-full max-w-2xl"><iframe width="100%" height="100%" frameborder="0" style="border:0" src="${embedUrl}" allowfullscreen loading="lazy"></iframe></div>\n\n`;
+                    apiMessageContent = `Provide detailed, step-by-step driving directions to ${destination}. I couldn't provide my exact GPS coordinates (location access denied/failed), so ask me for my starting location. Format the directions nicely using bullet points.`;
+                    finalizeAIRequest();
+                }, { timeout: 10000 });
+            } else {
+                const embedUrl = `https://maps.google.com/maps?saddr=Current+Location&daddr=${encodeURIComponent(destination)}&output=embed`;
+                prefixHTML = `<div class="mb-5 rounded-3xl overflow-hidden border border-slate-200 dark:border-zinc-700 shadow-sm relative h-[250px] sm:h-[300px] w-full max-w-2xl"><iframe width="100%" height="100%" frameborder="0" style="border:0" src="${embedUrl}" allowfullscreen loading="lazy"></iframe></div>\n\n`;
+                apiMessageContent = `Provide detailed, step-by-step driving directions to ${destination}. Format the directions nicely using bullet points. Ask me for my starting location.`;
+                finalizeAIRequest();
+            }
+            return;
+        } else if (mapMatch && mapMatch[1]) {
+            const location = mapMatch[1].trim();
+            setTimeout(() => {
+                const mapHtml = `Here is the map for **${location}**:\n\n<div class="mt-4 rounded-3xl overflow-hidden border border-slate-200 dark:border-zinc-700 shadow-sm relative h-[300px] sm:h-[400px] w-full max-w-2xl"><iframe width="100%" height="100%" frameborder="0" style="border:0" src="https://maps.google.com/maps?q=${encodeURIComponent(location)}&output=embed" allowfullscreen loading="lazy"></iframe></div>`;
+                handleTokenUpdate(msgId, "Loading Nexus Maps... 🗺️");
+                handleCompletion(msgId, mapHtml);
+            }, 600);
+            return;
+        }
+
         // --- GREETING INTERCEPTOR ---
         const greetings = ['hi', 'hello', 'hey', 'hi!', 'hello!', 'hey!'];
         const isCustomPersonality = personalitySelector && personalitySelector.value !== 'default';
@@ -1208,22 +1213,7 @@
             return;
         }
 
-        // --- STANDARD AI PROCESSING (Visual & Text) ---
-        let messageContent = userText;
-        if (attachedImageBase64) {
-            messageContent = [
-                { type: "text", text: userText || "Please analyze and explain what is in this image." },
-                { type: "image_url", image_url: { url: attachedImageBase64 } }
-            ];
-        }
-
-        chatHistoryContext.push({ role: "user", content: messageContent });
-        if (chatHistoryContext.length > 10) chatHistoryContext = chatHistoryContext.slice(-10);
-
-        window.aiEngine.postMessage({
-            id: msgId,
-            messages: [...chatHistoryContext]
-        });
+        finalizeAIRequest();
     }
 
     // --- File Upload Logic ---
@@ -1456,39 +1446,6 @@
               sendIframeCommand('playVideo');
               isMusicPlaying = true;
               e.target.closest('button').querySelector('i').classList.replace('ph-play', 'ph-pause');
-          }
-      }
-      else if (action === 'toggleMusicSettings') {
-          const panel = document.getElementById('music-settings-panel');
-          if (panel) {
-              if (panel.classList.contains('hidden')) {
-                  panel.classList.remove('hidden');
-                  panel.classList.add('flex');
-              } else {
-                  panel.classList.add('hidden');
-                  panel.classList.remove('flex');
-              }
-          }
-      }
-      else if (action === 'toggleMaxQuality') {
-          const toggle = e.target.closest('button');
-          const dot = toggle.querySelector('span');
-          const isEnabled = toggle.classList.contains('bg-emerald-500');
-          
-          if (isEnabled) {
-              toggle.classList.replace('bg-emerald-500', 'bg-slate-300');
-              toggle.classList.add('dark:bg-zinc-600');
-              dot.classList.replace('right-1', 'left-1');
-          } else {
-              toggle.classList.replace('bg-slate-300', 'bg-emerald-500');
-              toggle.classList.remove('dark:bg-zinc-600');
-              dot.classList.replace('left-1', 'right-1');
-          }
-          
-          // Hot-reload current track to apply the new quality setting
-          if (currentPlayingTrack && isMusicPlaying) {
-              const iframe = document.getElementById('yt-player-iframe');
-              if (iframe) iframe.src = getYouTubeEmbedUrl(currentPlayingTrack.videoId);
           }
       }
     });
