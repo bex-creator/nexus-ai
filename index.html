@@ -1171,16 +1171,55 @@
                 navigator.geolocation.getCurrentPosition((position) => {
                     const lat = position.coords.latitude;
                     const lng = position.coords.longitude;
-                    const navUrl = `https://www.google.com/maps/dir/?api=1&origin=${lat},${lng}&destination=${encodeURIComponent(destination)}`;
+                    
+                    // The embed URL is for the static visual overview inside the chat
                     const embedUrl = `https://maps.google.com/maps?saddr=${lat},${lng}&daddr=${encodeURIComponent(destination)}&output=embed`;
                     
-                    prefixHTML = `<div class="mb-5 rounded-3xl overflow-hidden border border-slate-200 dark:border-zinc-700 shadow-sm relative w-full max-w-2xl bg-white dark:bg-zinc-800"><iframe width="100%" height="300" frameborder="0" style="border:0" src="${embedUrl}" allowfullscreen loading="lazy" class="w-full h-[300px] sm:h-[350px]"></iframe><div class="p-4 sm:p-5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-slate-50 dark:bg-zinc-800/80 border-t border-slate-200 dark:border-zinc-700"><div class="flex items-center gap-3"><div class="w-10 h-10 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center text-indigo-600 dark:text-indigo-400"><i class="ph-fill ph-navigation-arrow text-xl"></i></div><div><span class="block text-sm font-bold text-slate-800 dark:text-zinc-200">Live Navigation</span><span class="block text-xs text-slate-500 dark:text-zinc-400">Start driving with Google Maps</span></div></div><a href="${navUrl}" class="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold py-2.5 px-5 rounded-xl flex items-center justify-center gap-2 shadow-md transition-all hover:shadow-lg active:scale-95"><i class="ph-bold ph-arrow-square-out"></i> Start Route</a></div></div>\n\n`;
+                    // The navUrl uses dir_action=navigate to force the native Google Maps app to open in live turn-by-turn mode
+                    const navUrl = `https://www.google.com/maps/dir/?api=1&origin=${lat},${lng}&destination=${encodeURIComponent(destination)}&dir_action=navigate`;
                     
-                    apiMessageContent = `My exact current starting location coordinates are Latitude ${lat}, Longitude ${lng}. Provide detailed, step-by-step driving directions from this exact location to ${destination}. Format the directions nicely using bullet points.`;
+                    prefixHTML = `<div class="mb-5 rounded-3xl overflow-hidden border border-slate-200 dark:border-zinc-700 shadow-sm relative w-full max-w-2xl bg-white dark:bg-zinc-800">
+                        <iframe width="100%" height="300" frameborder="0" style="border:0" src="${embedUrl}" allowfullscreen loading="lazy" class="w-full h-[300px] sm:h-[350px]"></iframe>
+                        <div class="p-4 sm:p-5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-slate-50 dark:bg-zinc-800/80 border-t border-slate-200 dark:border-zinc-700">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
+                                    <i class="ph-fill ph-car-profile text-xl"></i>
+                                </div>
+                                <div>
+                                    <span class="block text-sm font-bold text-slate-800 dark:text-zinc-200">Live Turn-by-Turn</span>
+                                    <span class="block text-xs text-slate-500 dark:text-zinc-400">Google restricts embedded live tracking.</span>
+                                </div>
+                            </div>
+                            <a href="${navUrl}" target="_blank" rel="noopener noreferrer" class="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-bold py-2.5 px-5 rounded-xl flex items-center justify-center gap-2 shadow-md transition-all hover:shadow-lg active:scale-95">
+                                <i class="ph-bold ph-navigation-arrow"></i> Start Live Navigation
+                            </a>
+                        </div>
+                    </div>\n\n`;
+                    
+                    apiMessageContent = `My exact current starting location coordinates are Latitude ${lat}, Longitude ${lng}. Provide detailed, step-by-step driving directions from this exact location to ${destination}. Format the directions nicely using bullet points. Before listing the directions, briefly mention that to get a live moving map, they need to click the "Start Live Navigation" button above because embedded live tracking is blocked by Google.`;
                     finalizeAIRequest();
                 }, (error) => {
+                    // Fallback if GPS is blocked
                     const embedUrl = `https://maps.google.com/maps?saddr=Current+Location&daddr=${encodeURIComponent(destination)}&output=embed`;
-                    prefixHTML = `<div class="mb-5 rounded-3xl overflow-hidden border border-slate-200 dark:border-zinc-700 shadow-sm relative h-[250px] sm:h-[300px] w-full max-w-2xl"><iframe width="100%" height="100%" frameborder="0" style="border:0" src="${embedUrl}" allowfullscreen loading="lazy"></iframe></div>\n\n`;
+                    const navUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(destination)}&dir_action=navigate`;
+                    
+                    prefixHTML = `<div class="mb-5 rounded-3xl overflow-hidden border border-slate-200 dark:border-zinc-700 shadow-sm relative w-full max-w-2xl bg-white dark:bg-zinc-800">
+                        <iframe width="100%" height="300" frameborder="0" style="border:0" src="${embedUrl}" allowfullscreen loading="lazy" class="w-full h-[300px] sm:h-[350px]"></iframe>
+                        <div class="p-4 sm:p-5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-slate-50 dark:bg-zinc-800/80 border-t border-slate-200 dark:border-zinc-700">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
+                                    <i class="ph-fill ph-car-profile text-xl"></i>
+                                </div>
+                                <div>
+                                    <span class="block text-sm font-bold text-slate-800 dark:text-zinc-200">Live Turn-by-Turn</span>
+                                    <span class="block text-xs text-slate-500 dark:text-zinc-400">Google restricts embedded live tracking.</span>
+                                </div>
+                            </div>
+                            <a href="${navUrl}" target="_blank" rel="noopener noreferrer" class="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-bold py-2.5 px-5 rounded-xl flex items-center justify-center gap-2 shadow-md transition-all hover:shadow-lg active:scale-95">
+                                <i class="ph-bold ph-navigation-arrow"></i> Start Live Navigation
+                            </a>
+                        </div>
+                    </div>\n\n`;
                     apiMessageContent = `Provide detailed, step-by-step driving directions to ${destination}. I couldn't provide my exact GPS coordinates (location access denied/failed), so ask me for my starting location. Format the directions nicely using bullet points.`;
                     finalizeAIRequest();
                 }, { timeout: 10000 });
