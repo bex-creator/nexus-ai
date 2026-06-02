@@ -420,9 +420,11 @@
 
     // Pre-load local device voices so they are ready immediately
     function loadVoices() {
-        systemVoices = window.speechSynthesis.getVoices();
+        const freshVoices = window.speechSynthesis.getVoices();
+        systemVoices = freshVoices;
         const select = document.getElementById('voice-select');
         if (select && systemVoices.length > 0) {
+            const currentSelection = select.value; // Preserve selection if list refreshes on mobile
             select.innerHTML = '';
             
             // Prioritize English voices
@@ -439,9 +441,11 @@
                 select.appendChild(opt);
             });
 
-            // Load saved preference
+            // Load saved preference or preserve current interaction
             const savedURI = localStorage.getItem('nexus_voice_uri');
-            if (savedURI && systemVoices.some(v => v.voiceURI === savedURI)) {
+            if (currentSelection && systemVoices.some(v => v.voiceURI === currentSelection)) {
+                select.value = currentSelection;
+            } else if (savedURI && systemVoices.some(v => v.voiceURI === savedURI)) {
                 select.value = savedURI;
             } else if (enVoices.length > 0) {
                 // Try to default to a good built-in if no preference
@@ -1798,17 +1802,27 @@
       }
       else if (action === 'testVoice') {
           if (window.speechSynthesis.speaking) window.speechSynthesis.cancel();
-          const utterance = new SpeechSynthesisUtterance("Hello! This is a preview of how I will sound.");
           
-          const uri = document.getElementById('voice-select').value;
-          if (uri && systemVoices.length > 0) {
-              const selectedVoice = systemVoices.find(v => v.voiceURI === uri);
-              if (selectedVoice) utterance.voice = selectedVoice;
-          }
-          
-          utterance.rate = parseFloat(document.getElementById('voice-rate').value);
-          utterance.pitch = parseFloat(document.getElementById('voice-pitch').value);
-          window.speechSynthesis.speak(utterance);
+          // CRITICAL FIX: Add a tiny timeout on mobile so the engine doesn't drop the audio after a cancel
+          setTimeout(() => {
+              const utterance = new SpeechSynthesisUtterance("Hello! This is a preview of how I will sound.");
+              
+              const uri = document.getElementById('voice-select').value;
+              // CRITICAL FIX: Always fetch a fresh array of voices immediately before assigning on iOS/Android
+              const freshVoices = window.speechSynthesis.getVoices(); 
+              
+              if (uri && freshVoices.length > 0) {
+                  const selectedVoice = freshVoices.find(v => v.voiceURI === uri);
+                  if (selectedVoice) {
+                      utterance.voice = selectedVoice;
+                      utterance.lang = selectedVoice.lang; // CRITICAL FIX: Mobile OS will reject voice if language doesn't match
+                  }
+              }
+              
+              utterance.rate = parseFloat(document.getElementById('voice-rate').value);
+              utterance.pitch = parseFloat(document.getElementById('voice-pitch').value);
+              window.speechSynthesis.speak(utterance);
+          }, 50);
       }
       else if (action === 'readAloud') {
         const btn = target;
@@ -1828,28 +1842,39 @@
             const clone = textNode.cloneNode(true);
             const textToSpeak = clone.innerText || clone.textContent;
             
-            const utterance = new SpeechSynthesisUtterance(textToSpeak);
-            
-            // Use User's Selected Voice Settings
-            const savedURI = localStorage.getItem('nexus_voice_uri');
-            if (savedURI && systemVoices.length > 0) {
-                const selectedVoice = systemVoices.find(v => v.voiceURI === savedURI);
-                if (selectedVoice) utterance.voice = selectedVoice;
-            }
-            
-            utterance.rate = parseFloat(localStorage.getItem('nexus_voice_rate') || 1.0);
-            utterance.pitch = parseFloat(localStorage.getItem('nexus_voice_pitch') || 1.0);
-            
-            utterance.onend = () => {
-                icon.classList.replace('ph-stop', 'ph-speaker-high');
-                btn.classList.remove('text-indigo-600', 'dark:text-indigo-400');
-            };
-            
-            icon.classList.replace('ph-speaker-high', 'ph-stop');
-            btn.classList.add('text-indigo-600', 'dark:text-indigo-400');
-            
-            // Play using local device hardware
-            window.speechSynthesis.speak(utterance);
+            setTimeout(() => {
+                const utterance = new SpeechSynthesisUtterance(textToSpeak);
+                
+                // Use User's Selected Voice Settings
+                const savedURI = localStorage.getItem('nexus_voice_uri');
+                const freshVoices = window.speechSynthesis.getVoices(); // Mobile fresh fetch
+                
+                if (savedURI && freshVoices.length > 0) {
+                    const selectedVoice = freshVoices.find(v => v.voiceURI === savedURI);
+                    if (selectedVoice) {
+                        utterance.voice = selectedVoice;
+                        utterance.lang = selectedVoice.lang; // Mobile locale enforcement
+                    }
+                }
+                
+                utterance.rate = parseFloat(localStorage.getItem('nexus_voice_rate') || 1.0);
+                utterance.pitch = parseFloat(localStorage.getItem('nexus_voice_pitch') || 1.0);
+                
+                utterance.onend = () => {
+                    icon.classList.replace('ph-stop', 'ph-speaker-high');
+                    btn.classList.remove('text-indigo-600', 'dark:text-indigo-400');
+                };
+                utterance.onerror = () => {
+                    icon.classList.replace('ph-stop', 'ph-speaker-high');
+                    btn.classList.remove('text-indigo-600', 'dark:text-indigo-400');
+                };
+                
+                icon.classList.replace('ph-speaker-high', 'ph-stop');
+                btn.classList.add('text-indigo-600', 'dark:text-indigo-400');
+                
+                // Play using local device hardware
+                window.speechSynthesis.speak(utterance);
+            }, 50);
         }
       }
       else if (action === 'toggleMic') {
