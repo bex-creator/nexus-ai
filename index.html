@@ -208,6 +208,11 @@
           <i class="ph-bold ph-trash text-lg"></i>
         </button>
 
+        <!-- Voice Settings Button -->
+        <button data-click="openVoiceSettings" class="p-2.5 rounded-full hover:bg-indigo-100 dark:hover:bg-indigo-900/30 transition-colors text-slate-600 hover:text-indigo-600 dark:text-zinc-300 dark:hover:text-indigo-400" title="Voice Settings">
+          <i class="ph-bold ph-sliders-horizontal text-lg"></i>
+        </button>
+
         <!-- Theme Switcher -->
         <button id="theme-toggle" class="p-2.5 rounded-full hover:bg-slate-200/50 dark:hover:bg-zinc-800/50 transition-colors text-slate-600 dark:text-zinc-300">
           <i class="ph-bold ph-moon text-lg dark:hidden"></i>
@@ -364,16 +369,120 @@
     </div>
   </div>
 
+  <!-- Voice Settings Modal -->
+  <div id="voice-settings-modal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-black/50 backdrop-blur-sm transition-opacity opacity-0 pointer-events-none duration-300">
+      <div class="bg-white dark:bg-zinc-800 rounded-3xl p-6 w-full max-w-sm shadow-2xl m-4 border border-slate-200 dark:border-zinc-700 transform scale-95 transition-transform duration-300" id="voice-settings-content">
+          <div class="flex justify-between items-center mb-5">
+              <h3 class="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                  <i class="ph-fill ph-speaker-high text-indigo-500"></i> Voice Options
+              </h3>
+              <button data-click="closeVoiceSettings" class="text-slate-400 hover:text-slate-600 dark:hover:text-white">
+                  <i class="ph-bold ph-x text-lg"></i>
+              </button>
+          </div>
+          <p class="text-xs text-slate-500 dark:text-zinc-400 mb-4">Without an API key, we use your device's built-in offline voices. Choose the one that sounds best to you below!</p>
+          <div class="space-y-4">
+              <div>
+                  <label class="block text-xs font-semibold text-slate-500 dark:text-zinc-400 mb-1">Select Local Voice</label>
+                  <div class="relative">
+                      <select id="voice-select" class="w-full appearance-none px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-zinc-900 text-sm font-medium text-slate-800 dark:text-zinc-200 border border-slate-200 dark:border-zinc-700 outline-none focus:border-indigo-500 custom-scrollbar truncate pr-8">
+                          <option value="">Loading voices...</option>
+                      </select>
+                      <i class="ph ph-caret-down text-sm absolute right-3 top-3 text-slate-500 pointer-events-none"></i>
+                  </div>
+              </div>
+              <div class="flex gap-4">
+                  <div class="flex-1">
+                      <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400 mb-1">Speed: <span id="rate-val" class="text-indigo-500">1.0</span>x</label>
+                      <input type="range" id="voice-rate" min="0.5" max="2" step="0.1" value="1" class="w-full accent-indigo-500">
+                  </div>
+                  <div class="flex-1">
+                      <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400 mb-1">Pitch: <span id="pitch-val" class="text-indigo-500">1.0</span></label>
+                      <input type="range" id="voice-pitch" min="0" max="2" step="0.1" value="1" class="w-full accent-indigo-500">
+                  </div>
+              </div>
+          </div>
+          <div class="mt-6">
+              <button data-click="testVoice" class="w-full bg-slate-100 hover:bg-slate-200 dark:bg-zinc-700 dark:hover:bg-zinc-600 text-slate-800 dark:text-white text-sm font-bold py-3 rounded-xl transition-all shadow-sm flex items-center justify-center gap-2">
+                  <i class="ph-fill ph-play-circle text-lg"></i> Test Voice
+              </button>
+          </div>
+      </div>
+  </div>
+
   <!-- Logic Script -->
   <script>
     const apiKey = ""; // Provided by execution environment
     const USER_GEMINI_KEY = ""; // 🔑 PASTE YOUR FREE GEMINI API KEY HERE FOR GITHUB PAGES (aistudio.google.com)
     let currentAudio = null; // Track current playing TTS audio
+    let systemVoices = [];
 
     // Pre-load local device voices so they are ready immediately
+    function loadVoices() {
+        systemVoices = window.speechSynthesis.getVoices();
+        const select = document.getElementById('voice-select');
+        if (select && systemVoices.length > 0) {
+            select.innerHTML = '';
+            
+            // Prioritize English voices
+            const enVoices = systemVoices.filter(v => v.lang.startsWith('en'));
+            const otherVoices = systemVoices.filter(v => !v.lang.startsWith('en'));
+            const sortedVoices = [...enVoices, ...otherVoices];
+
+            sortedVoices.forEach((v, i) => {
+                const opt = document.createElement('option');
+                opt.value = v.voiceURI;
+                // Add a star to voices that have "Natural" or "Premium" in the name
+                const isPremium = (v.name.includes('Natural') || v.name.includes('Premium') || v.name.includes('Enhanced')) ? '★ ' : '';
+                opt.textContent = `${isPremium}${v.name} (${v.lang})`;
+                select.appendChild(opt);
+            });
+
+            // Load saved preference
+            const savedURI = localStorage.getItem('nexus_voice_uri');
+            if (savedURI && systemVoices.some(v => v.voiceURI === savedURI)) {
+                select.value = savedURI;
+            } else if (enVoices.length > 0) {
+                // Try to default to a good built-in if no preference
+                const goodDefault = enVoices.find(v => v.name.includes('Natural') || v.name.includes('Premium')) || enVoices[0];
+                select.value = goodDefault.voiceURI;
+            }
+        }
+    }
+
     if ('speechSynthesis' in window) {
-        window.speechSynthesis.onvoiceschanged = () => { window.speechSynthesis.getVoices(); };
-        window.speechSynthesis.getVoices();
+        window.speechSynthesis.onvoiceschanged = loadVoices;
+        loadVoices();
+    }
+    
+    // Listeners for Voice Settings Sliders
+    const voiceRateEl = document.getElementById('voice-rate');
+    const voicePitchEl = document.getElementById('voice-pitch');
+    if (voiceRateEl) {
+        const savedRate = localStorage.getItem('nexus_voice_rate') || 1.0;
+        voiceRateEl.value = savedRate;
+        document.getElementById('rate-val').innerText = parseFloat(savedRate).toFixed(1);
+        voiceRateEl.addEventListener('input', (e) => {
+            document.getElementById('rate-val').innerText = parseFloat(e.target.value).toFixed(1);
+            localStorage.setItem('nexus_voice_rate', e.target.value);
+        });
+    }
+    if (voicePitchEl) {
+        const savedPitch = localStorage.getItem('nexus_voice_pitch') || 1.0;
+        voicePitchEl.value = savedPitch;
+        document.getElementById('pitch-val').innerText = parseFloat(savedPitch).toFixed(1);
+        voicePitchEl.addEventListener('input', (e) => {
+            document.getElementById('pitch-val').innerText = parseFloat(e.target.value).toFixed(1);
+            localStorage.setItem('nexus_voice_pitch', e.target.value);
+        });
+    }
+    
+    // Save voice selection
+    const voiceSelectEl = document.getElementById('voice-select');
+    if (voiceSelectEl) {
+        voiceSelectEl.addEventListener('change', (e) => {
+            localStorage.setItem('nexus_voice_uri', e.target.value);
+        });
     }
 
     // --- Audio Utilities for High-Quality Neural TTS ---
@@ -1667,6 +1776,39 @@
             window.open(`sms:${number}${separator}body=${encodeURIComponent(messageBody)}`, '_self');
         }
       }
+      else if (action === 'openVoiceSettings') {
+          const modal = document.getElementById('voice-settings-modal');
+          const content = document.getElementById('voice-settings-content');
+          modal.classList.remove('hidden');
+          // small delay to allow display:block to apply before animating opacity
+          setTimeout(() => {
+              modal.classList.remove('opacity-0', 'pointer-events-none');
+              content.classList.remove('scale-95');
+          }, 10);
+      }
+      else if (action === 'closeVoiceSettings') {
+          const modal = document.getElementById('voice-settings-modal');
+          const content = document.getElementById('voice-settings-content');
+          modal.classList.add('opacity-0', 'pointer-events-none');
+          content.classList.add('scale-95');
+          setTimeout(() => {
+              modal.classList.add('hidden');
+          }, 300);
+      }
+      else if (action === 'testVoice') {
+          if (window.speechSynthesis.speaking) window.speechSynthesis.cancel();
+          const utterance = new SpeechSynthesisUtterance("Hello! This is a preview of how I will sound.");
+          
+          const uri = document.getElementById('voice-select').value;
+          if (uri && systemVoices.length > 0) {
+              const selectedVoice = systemVoices.find(v => v.voiceURI === uri);
+              if (selectedVoice) utterance.voice = selectedVoice;
+          }
+          
+          utterance.rate = parseFloat(document.getElementById('voice-rate').value);
+          utterance.pitch = parseFloat(document.getElementById('voice-pitch').value);
+          window.speechSynthesis.speak(utterance);
+      }
       else if (action === 'readAloud') {
         const btn = target;
         const icon = btn.querySelector('i');
@@ -1687,45 +1829,15 @@
             
             const utterance = new SpeechSynthesisUtterance(textToSpeak);
             
-            // Search for the highest quality local voice installed on this specific device/browser
-            const voices = window.speechSynthesis.getVoices();
-            
-            // Google Assistant's "Red" voice corresponds to the classic default Google US English voice.
-            const preferredVoices = [
-                'Red',                        // In case a specific extension exposes the color name
-                'Google US English',          // Classic Google "Red" Voice (Chrome Desktop)
-                'en-US-language-1',           // Common internal name for Google Red on Android
-                'en-us-x-sfg#female_1-local', // Alternative Android name
-                'Microsoft Aria Online (Natural)', 
-                'Samantha',                   // Apple Premium
-                'Google UK English Female'
-            ];
-            
-            let selectedVoice = null;
-            for (let pref of preferredVoices) {
-                selectedVoice = voices.find(v => v.name.includes(pref));
-                if (selectedVoice) break;
+            // Use User's Selected Voice Settings
+            const savedURI = localStorage.getItem('nexus_voice_uri');
+            if (savedURI && systemVoices.length > 0) {
+                const selectedVoice = systemVoices.find(v => v.voiceURI === savedURI);
+                if (selectedVoice) utterance.voice = selectedVoice;
             }
             
-            // Fallbacks for natural sounding OS voices
-            if (!selectedVoice) {
-                selectedVoice = voices.find(v => v.lang.startsWith('en-') && (v.name.includes('Premium') || v.name.includes('Natural') || v.name.includes('Enhanced')));
-            }
-            // Strict fallback to any female Google voice if possible
-            if (!selectedVoice) {
-                selectedVoice = voices.find(v => v.name.includes('Google') && v.name.includes('Female'));
-            }
-            if (!selectedVoice) {
-                selectedVoice = voices.find(v => v.lang.startsWith('en-'));
-            }
-            
-            if (selectedVoice) {
-                utterance.voice = selectedVoice;
-            }
-            
-            // Set to exact default pitch/rate to match the classic Google Assistant voice
-            utterance.rate = 1.0; 
-            utterance.pitch = 1.0;
+            utterance.rate = parseFloat(localStorage.getItem('nexus_voice_rate') || 1.0);
+            utterance.pitch = parseFloat(localStorage.getItem('nexus_voice_pitch') || 1.0);
             
             utterance.onend = () => {
                 icon.classList.replace('ph-stop', 'ph-speaker-high');
