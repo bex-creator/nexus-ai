@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="en" class="dark">
 <head>
   <meta charset="UTF-8">
@@ -107,6 +107,7 @@
     }
 
     /* Style markdown nodes elegantly */
+    .markdown-content { overflow-wrap: anywhere; word-break: break-word; min-width: 0; }
     .markdown-content p { margin-bottom: 0.75rem; line-height: 1.625; }
     .markdown-content p:last-child { margin-bottom: 0; }
     .markdown-content ul, .markdown-content ol { margin-left: 1.5rem; margin-bottom: 1rem; list-style-type: disc; }
@@ -279,7 +280,7 @@
     </main>
 
     <!-- Nexus Music Floating Widget -->
-    <div id="nexus-music-widget" class="absolute bottom-24 left-4 sm:left-6 z-40 bg-white/90 dark:bg-zinc-800/90 backdrop-blur-md border border-slate-200 dark:border-zinc-700 rounded-[2rem] p-3 shadow-xl hidden items-center gap-3 w-[300px] animate-fade-in transition-all hover:scale-[1.02]">
+    <div id="nexus-music-widget" class="absolute bottom-24 left-4 sm:left-6 z-40 bg-white/90 dark:bg-zinc-800/90 backdrop-blur-md border border-slate-200 dark:border-zinc-700 rounded-[2rem] p-3 shadow-xl hidden items-center gap-3 w-[calc(100%-2rem)] max-w-[300px] animate-fade-in transition-all hover:scale-[1.02]">
         <div id="music-disc" class="w-12 h-12 rounded-full bg-gradient-to-tr from-[#d96570] to-[#9b72cb] flex items-center justify-center text-white shadow-md flex-shrink-0">
             <i class="ph-fill ph-music-notes text-xl"></i>
         </div>
@@ -298,7 +299,7 @@
     </div>
 
     <!-- Input Container -->
-    <footer class="flex-none pb-6 pt-2 px-4 sm:px-6 w-full max-w-4xl mx-auto flex justify-center z-50">
+    <footer class="flex-none pb-4 sm:pb-6 pt-2 px-4 sm:px-6 w-full max-w-4xl mx-auto flex justify-center z-50 bg-gemini-lightBg dark:bg-gemini-darkBg">
       <div class="w-full relative">
         <form id="chat-form" class="relative flex flex-col justify-center bg-white dark:bg-gemini-darkCard border border-slate-200/80 dark:border-zinc-800 rounded-3xl shadow-[0_4px_30px_rgba(0,0,0,0.04)] dark:shadow-[0_12px_40px_rgba(0,0,0,0.3)] transition-all overflow-hidden focus-within:ring-2 focus-within:ring-indigo-500/20 focus-within:border-slate-300 dark:focus-within:border-zinc-700">
           
@@ -680,13 +681,13 @@
         window.canvasCodeBlocks.push({ code: text, language: lang });
         
         return `
-          <div class="relative group my-4 rounded-2xl overflow-hidden border border-slate-200/50 dark:border-white/10 bg-[#1e1f20]">
-            <div class="absolute top-3 right-3 z-10 opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
+          <div class="relative group my-4 rounded-2xl overflow-hidden border border-slate-200/50 dark:border-white/10 bg-[#1e1f20] max-w-full">
+            <div class="absolute top-3 right-3 z-10 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity flex gap-2">
               <button data-click="openCanvas" data-arg="${codeId}" class="bg-indigo-600 hover:bg-indigo-500 text-white text-[11px] font-bold px-3 py-1.5 rounded-lg flex items-center gap-1.5 shadow-lg active:scale-95 transition-all">
                 <i class="ph-bold ph-layout"></i> Open in Canvas
               </button>
             </div>
-            <pre class="!m-0 !border-0 !rounded-none !bg-transparent"><code class="language-${lang}">${escapeHTML(text)}</code></pre>
+            <pre class="!m-0 !border-0 !rounded-none !bg-transparent overflow-x-auto custom-scrollbar"><code class="language-${lang}">${escapeHTML(text)}</code></pre>
           </div>
         `;
     };
@@ -1012,7 +1013,7 @@
         if (!actionRow) {
             actionRow = document.createElement('div');
             actionRow.id = 'actions-' + id;
-            actionRow.className = 'flex items-center gap-2 mt-4 pt-2 border-t border-slate-100 dark:border-zinc-800/40 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity duration-200 flex-wrap';
+            actionRow.className = 'flex items-center gap-2 mt-4 pt-2 border-t border-slate-100 dark:border-zinc-800/40 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 focus-within:opacity-100 transition-opacity duration-200 flex-wrap';
             const flexCol = bubble.querySelector('.flex-col');
             if (flexCol) flexCol.appendChild(actionRow);
         }
@@ -1044,9 +1045,9 @@
         // 1. Render User Message
         let userHtml = `
             <div class="flex items-start justify-end gap-4 max-w-3xl mx-auto w-full animate-fade-in">
-              <div class="flex flex-col items-end max-w-[85%]">
+              <div class="flex flex-col items-end max-w-[85%] sm:max-w-[75%] min-w-0">
                 <div class="text-[11px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest mb-1">You</div>
-                <div class="bg-slate-200/60 dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 p-4 rounded-3xl rounded-tr-none text-[15px] leading-relaxed font-medium">
+                <div class="bg-slate-200/60 dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 p-4 rounded-3xl rounded-tr-none text-[15px] leading-relaxed font-medium break-words overflow-hidden w-full text-left sm:text-right" style="overflow-wrap: anywhere;">
         `;
         
         if (attachedImageBase64) {
@@ -1077,7 +1078,7 @@
               </div>
               <div class="flex flex-col w-full min-w-0">
                 <div class="text-[11px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest mb-1.5">Nexus AI</div>
-                <div id="text-${msgId}" class="markdown-content font-medium text-[15px] leading-relaxed text-slate-800 dark:text-zinc-200 w-full">
+                <div id="text-${msgId}" class="markdown-content font-medium text-[15px] leading-relaxed text-slate-800 dark:text-zinc-200 w-full min-w-0">
                     <div class="flex items-center gap-1.5 py-4">
                       <span class="w-2 h-2 rounded-full bg-blue-500 animate-bounce" style="animation-delay: 0s"></span>
                       <span class="w-2 h-2 rounded-full bg-purple-500 animate-bounce" style="animation-delay: 0.15s"></span>
