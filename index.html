@@ -202,6 +202,12 @@
           </select>
           <i class="ph ph-caret-down text-[10px] absolute right-3 text-slate-500 pointer-events-none"></i>
         </div>
+        
+        <!-- Clear Chat Button (Feature 3: Memory Wipe) -->
+        <button id="clear-chat-btn" data-click="clearChat" class="p-2.5 rounded-full hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors text-slate-600 hover:text-red-600 dark:text-zinc-300 dark:hover:text-red-400" title="Clear Chat History">
+          <i class="ph-bold ph-trash text-lg"></i>
+        </button>
+
         <!-- Theme Switcher -->
         <button id="theme-toggle" class="p-2.5 rounded-full hover:bg-slate-200/50 dark:hover:bg-zinc-800/50 transition-colors text-slate-600 dark:text-zinc-300">
           <i class="ph-bold ph-moon text-lg dark:hidden"></i>
@@ -307,6 +313,11 @@
             </button>
             <input type="file" id="file-upload-input" accept="image/*" class="hidden">
 
+            <!-- Mic Button (Feature 2: Speech to Text) -->
+            <button type="button" id="mic-btn" data-click="toggleMic" class="flex-none p-2 -ml-1 text-slate-400 hover:text-red-500 dark:text-zinc-500 dark:hover:text-red-400 transition-colors" title="Voice Input">
+              <i class="ph-fill ph-microphone text-xl sm:text-2xl"></i>
+            </button>
+
             <input type="text" id="chat-input" placeholder="Ask Nexus AI... (or type 'play lo-fi')" autocomplete="off" class="flex-1 bg-transparent py-3 sm:py-4 px-2 sm:px-3 text-base text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-zinc-500 outline-none w-full min-w-0">
             
             <button type="submit" id="chat-submit" class="flex-none bg-slate-100 hover:bg-slate-200 text-slate-400 hover:text-slate-900 dark:bg-zinc-800 dark:hover:bg-zinc-700 dark:text-zinc-400 dark:hover:text-white w-10 sm:w-11 h-10 sm:h-11 rounded-full font-bold transition-all flex items-center justify-center active:scale-95 disabled:opacity-50 disabled:pointer-events-none disabled:active:scale-100">
@@ -355,6 +366,71 @@
 
   <!-- Logic Script -->
   <script>
+    const apiKey = ""; // Provided by execution environment
+    const USER_GEMINI_KEY = ""; // 🔑 PASTE YOUR FREE GEMINI API KEY HERE FOR GITHUB PAGES (aistudio.google.com)
+    let currentAudio = null; // Track current playing TTS audio
+
+    // Pre-load local device voices so they are ready immediately
+    if ('speechSynthesis' in window) {
+        window.speechSynthesis.onvoiceschanged = () => { window.speechSynthesis.getVoices(); };
+        window.speechSynthesis.getVoices();
+    }
+
+    // --- Audio Utilities for High-Quality Neural TTS ---
+    function base64ToUint8Array(base64) {
+        const binaryString = window.atob(base64);
+        const len = binaryString.length;
+        const bytes = new Uint8Array(len);
+        for (let i = 0; i < len; i++) {
+            bytes[i] = binaryString.charCodeAt(i);
+        }
+        return bytes;
+    }
+    
+    function writeString(view, offset, string) {
+        for (let i = 0; i < string.length; i++) {
+            view.setUint8(offset + i, string.charCodeAt(i));
+        }
+    }
+
+    function pcmToWav(pcmData, sampleRate = 24000) {
+        const numChannels = 1;
+        const bitsPerSample = 16;
+        const byteRate = sampleRate * numChannels * (bitsPerSample / 8);
+        const blockAlign = numChannels * (bitsPerSample / 8);
+        
+        const buffer = new ArrayBuffer(44 + pcmData.length);
+        const view = new DataView(buffer);
+        
+        // RIFF chunk descriptor
+        writeString(view, 0, 'RIFF');
+        view.setUint32(4, 36 + pcmData.length, true);
+        writeString(view, 8, 'WAVE');
+        
+        // FMT sub-chunk
+        writeString(view, 12, 'fmt ');
+        view.setUint32(16, 16, true); // 16 for PCM
+        view.setUint16(20, 1, true);  // 1 = PCM
+        view.setUint16(22, numChannels, true);
+        view.setUint32(24, sampleRate, true);
+        view.setUint32(28, byteRate, true);
+        view.setUint16(32, blockAlign, true);
+        view.setUint16(34, bitsPerSample, true);
+        
+        // Data sub-chunk
+        writeString(view, 36, 'data');
+        view.setUint32(40, pcmData.length, true);
+        
+        // Write PCM data
+        const pcmBytes = new Uint8Array(pcmData);
+        const outBytes = new Uint8Array(buffer, 44);
+        for (let i = 0; i < pcmBytes.length; i++) {
+            outBytes[i] = pcmBytes[i];
+        }
+        
+        return new Blob([view], { type: 'audio/wav' });
+    }
+
     // --- NEXUS MUSIC / ROBUST IFRAME SETUP ---
     // Using the key you provided for better school account compatibility
     const YOUTUBE_API_KEY = "AIzaSyBFTCtKzfMfpaj3aFjFPLbaysw5atwy_LA"; 
@@ -459,6 +535,30 @@
     const emptyState = document.getElementById('empty-state');
     const modeSelector = document.getElementById('ai-mode-selector');
     const personalitySelector = document.getElementById('ai-personality-selector');
+
+    // --- FEATURE 3: Local Memory & Session Saving ---
+    function saveChatSession() {
+        localStorage.setItem('nexus_chat_context', JSON.stringify(chatHistoryContext));
+        const historyNode = document.getElementById('chat-history');
+        if (historyNode) {
+            const clone = historyNode.cloneNode(true);
+            clone.querySelectorAll('.is-typing').forEach(n => n.remove());
+            const emptyNode = clone.querySelector('#empty-state');
+            if (emptyNode) emptyNode.remove();
+            localStorage.setItem('nexus_chat_html', clone.innerHTML);
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const savedHtml = localStorage.getItem('nexus_chat_html');
+        if (savedHtml && savedHtml.trim() !== '') {
+            if (emptyState) emptyState.classList.add('hidden');
+            chatHistoryEl.insertAdjacentHTML('beforeend', savedHtml);
+            const savedCtx = localStorage.getItem('nexus_chat_context');
+            if (savedCtx) chatHistoryContext = JSON.parse(savedCtx);
+            setTimeout(() => { chatScroller.scrollTop = chatScroller.scrollHeight; }, 100);
+        }
+    });
 
     // Canvas State & Marked.js Configuration
     window.canvasCodeBlocks = [];
@@ -765,6 +865,7 @@
             if (timerEl) timerEl.remove();
 
             renderActionButtons(id, fullText);
+            saveChatSession(); // Save session when generation finishes
         }
         
         currentTypingBubbleId = null;
@@ -790,6 +891,7 @@
         
         currentTypingBubbleId = null;
         chatScroller.scrollTop = chatScroller.scrollHeight;
+        saveChatSession(); // Save session even if it errors
     }
 
     // --- Action Buttons Generation ---
@@ -801,7 +903,7 @@
         if (!actionRow) {
             actionRow = document.createElement('div');
             actionRow.id = 'actions-' + id;
-            actionRow.className = 'flex items-center gap-2 mt-4 pt-2 border-t border-slate-100 dark:border-zinc-800/40 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity duration-200';
+            actionRow.className = 'flex items-center gap-2 mt-4 pt-2 border-t border-slate-100 dark:border-zinc-800/40 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity duration-200 flex-wrap';
             const flexCol = bubble.querySelector('.flex-col');
             if (flexCol) flexCol.appendChild(actionRow);
         }
@@ -809,6 +911,9 @@
         actionRow.innerHTML = `
             <button data-click="copyResponse" data-arg="${id}" class="text-xs font-semibold text-slate-500 hover:text-slate-900 dark:text-zinc-400 dark:hover:text-white flex items-center gap-1.5 px-3 py-1.5 rounded-full hover:bg-slate-100 dark:hover:bg-zinc-800 transition-all">
                 <i class="ph ph-copy"></i> Copy
+            </button>
+            <button data-click="readAloud" data-arg="${id}" class="text-xs font-semibold text-slate-500 hover:text-slate-900 dark:text-zinc-400 dark:hover:text-white flex items-center gap-1.5 px-3 py-1.5 rounded-full hover:bg-slate-100 dark:hover:bg-zinc-800 transition-all">
+                <i class="ph ph-speaker-high"></i> Read
             </button>
             <button data-click="triggerContinuation" data-arg="${id}" class="text-xs font-semibold text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300 flex items-center gap-1.5 px-3 py-1.5 rounded-full hover:bg-indigo-50 dark:hover:bg-indigo-950/40 transition-all">
                 <i class="ph ph-play-forward"></i> Continue Writing
@@ -887,10 +992,45 @@
             }
         }, 100);
 
-        // --- MUSIC COMMANDS INTERCEPTOR ---
+        // --- FEATURE INTERCEPTORS ---
         const lowerInput = userText.toLowerCase().trim();
         let prefixHTML = "";
         let apiMessageContent = userText;
+
+        // 1. FEATURE: Real-Time Weather Integration
+        if (/^(?:what is the )?weather(?: like)?(?: today)?/i.test(lowerInput) && lowerInput.length < 40) {
+            handleTokenUpdate(msgId, "Checking local weather... 🌤️");
+            if ("geolocation" in navigator) {
+                navigator.geolocation.getCurrentPosition(async (position) => {
+                    const lat = position.coords.latitude;
+                    const lng = position.coords.longitude;
+                    try {
+                        const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current_weather=true&temperature_unit=fahrenheit`);
+                        const data = await res.json();
+                        const cw = data.current_weather;
+                        const weatherHtml = `<div class="mb-4 p-6 rounded-3xl bg-gradient-to-tr from-sky-400 to-blue-500 text-white shadow-lg inline-block w-full max-w-sm"><div class="flex items-center justify-between gap-4"><div class="flex items-center gap-4"><i class="ph-fill ph-cloud-sun text-5xl"></i><div><p class="text-4xl font-bold tracking-tight">${cw.temperature}°F</p><p class="text-sm font-medium opacity-90 mt-1">Wind: ${cw.windspeed} mph</p></div></div></div></div>\n\nHere is your real-time local weather!`;
+                        handleCompletion(msgId, weatherHtml);
+                    } catch (e) {
+                        handleCompletion(msgId, "Sorry, I couldn't fetch the weather data right now.");
+                    }
+                }, () => handleCompletion(msgId, "I need location access to check your local weather!"), {timeout: 5000});
+            } else {
+                handleCompletion(msgId, "Geolocation is not supported by your browser.");
+            }
+            return;
+        }
+
+        // 2. FEATURE: Live Image Generation
+        const imgGenRegex = /^(?:generate|create|make|draw) (?:an )?(?:image|picture|photo) of (.+)/i;
+        const imgMatch = lowerInput.match(imgGenRegex);
+        if (imgMatch && imgMatch[1]) {
+            const prompt = imgMatch[1].trim();
+            handleTokenUpdate(msgId, "Generating image... 🎨");
+            const imgUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=1024&height=1024&nologo=true`;
+            const imgHtml = `Here is your image of **${prompt}**:\n\n<div class="mt-4 rounded-3xl overflow-hidden border border-slate-200 dark:border-zinc-700 shadow-sm relative w-full max-w-xl bg-slate-100 dark:bg-zinc-800"><img src="${imgUrl}" alt="${prompt}" class="w-full h-auto object-cover min-h-[300px]" onload="this.parentElement.classList.remove('animate-pulse')" onerror="this.outerHTML='<p class=\\'p-4 text-red-500\\'>Failed to load image.</p>'"/></div>`;
+            setTimeout(() => { handleCompletion(msgId, imgHtml); }, 1500); // Fake delay for smooth UX transition
+            return;
+        }
         
         if (lowerInput.startsWith('play ')) {
             const query = userText.substring(5).trim();
@@ -1162,6 +1302,24 @@
                 prefixContent: prefixHTML
             });
         };
+
+        // --- SMS / TEXTING INTERCEPTOR ---
+        const smsRegex = /^(?:text|send a(?: text)?(?: message)? to|sms)(?: me)?(?: at)? ([\+\d\s\-\(\)]{7,20})(?: saying| about| that)? (.+)/i;
+        const smsMatch = lowerInput.match(smsRegex);
+
+        if (smsMatch && smsMatch[1]) {
+            const rawNumber = smsMatch[1].trim();
+            const number = rawNumber.replace(/[^\d\+]/g, ''); // Strip visual formatting for the URI
+            const topic = smsMatch[2].trim();
+            
+            prefixHTML = `<div class="mb-5 rounded-3xl overflow-hidden border border-slate-200 dark:border-zinc-700 shadow-sm relative w-full max-w-2xl bg-white dark:bg-zinc-800"><div class="p-4 sm:p-5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-slate-50 dark:bg-zinc-800/80 border-b border-slate-200 dark:border-zinc-700"><div class="flex items-center gap-3"><div class="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400"><i class="ph-fill ph-chat-circle-text text-xl"></i></div><div><span class="block text-sm font-bold text-slate-800 dark:text-zinc-200">Text Message Draft</span><span class="block text-xs text-slate-500 dark:text-zinc-400">To: ${rawNumber}</span></div></div><button type="button" data-click="sendSms" data-arg="${number}" data-msgid="${msgId}" class="w-full sm:w-auto bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold py-2.5 px-5 rounded-xl flex items-center justify-center gap-2 shadow-md transition-all hover:shadow-lg active:scale-95"><i class="ph-bold ph-paper-plane-right"></i> Open Native SMS</button></div></div>\n\n`;
+            
+            apiMessageContent = `Draft a brief text message based on this prompt: "${topic}". Return ONLY the text message body itself. Do not include any introductory text, quotes, or conversational filler.`;
+            
+            handleTokenUpdate(msgId, "Drafting text message... 💬");
+            finalizeAIRequest();
+            return;
+        }
 
         if (dirMatch && dirMatch[1]) {
             const destination = dirMatch[1].trim();
@@ -1486,6 +1644,146 @@
               isMusicPlaying = true;
               e.target.closest('button').querySelector('i').classList.replace('ph-play', 'ph-pause');
           }
+      }
+      else if (action === 'sendSms') {
+        const number = arg;
+        const msgId = target.dataset.msgid;
+        const textNode = document.getElementById('text-' + msgId);
+        
+        if (textNode) {
+            // Clone the node so we can extract the text without modifying the UI
+            const clone = textNode.cloneNode(true);
+            
+            // Remove the visual HTML box from the clone to just leave the drafted text
+            const prefixBox = clone.querySelector('.mb-5.rounded-3xl');
+            if (prefixBox) prefixBox.remove();
+            
+            let messageBody = clone.innerText.trim();
+            
+            // Handle iOS vs Android SMS URI formatting differences (iOS uses & instead of ? sometimes)
+            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+            const separator = isIOS ? '&' : '?';
+            
+            window.open(`sms:${number}${separator}body=${encodeURIComponent(messageBody)}`, '_self');
+        }
+      }
+      else if (action === 'readAloud') {
+        const btn = target;
+        const icon = btn.querySelector('i');
+        
+        // Stop currently playing local speech
+        if (window.speechSynthesis.speaking) {
+            window.speechSynthesis.cancel();
+            icon.classList.replace('ph-stop', 'ph-speaker-high');
+            btn.classList.remove('text-indigo-600', 'dark:text-indigo-400');
+            return;
+        }
+        
+        const textNode = document.getElementById('text-' + arg);
+        if (textNode) {
+            // Strip any nested markdown/HTML to just get raw readable text
+            const clone = textNode.cloneNode(true);
+            const textToSpeak = clone.innerText || clone.textContent;
+            
+            const utterance = new SpeechSynthesisUtterance(textToSpeak);
+            
+            // Search for the highest quality local voice installed on this specific device/browser
+            const voices = window.speechSynthesis.getVoices();
+            
+            // Google Assistant's "Red" voice corresponds to the classic default Google US English voice.
+            const preferredVoices = [
+                'Red',                        // In case a specific extension exposes the color name
+                'Google US English',          // Classic Google "Red" Voice (Chrome Desktop)
+                'en-US-language-1',           // Common internal name for Google Red on Android
+                'en-us-x-sfg#female_1-local', // Alternative Android name
+                'Microsoft Aria Online (Natural)', 
+                'Samantha',                   // Apple Premium
+                'Google UK English Female'
+            ];
+            
+            let selectedVoice = null;
+            for (let pref of preferredVoices) {
+                selectedVoice = voices.find(v => v.name.includes(pref));
+                if (selectedVoice) break;
+            }
+            
+            // Fallbacks for natural sounding OS voices
+            if (!selectedVoice) {
+                selectedVoice = voices.find(v => v.lang.startsWith('en-') && (v.name.includes('Premium') || v.name.includes('Natural') || v.name.includes('Enhanced')));
+            }
+            // Strict fallback to any female Google voice if possible
+            if (!selectedVoice) {
+                selectedVoice = voices.find(v => v.name.includes('Google') && v.name.includes('Female'));
+            }
+            if (!selectedVoice) {
+                selectedVoice = voices.find(v => v.lang.startsWith('en-'));
+            }
+            
+            if (selectedVoice) {
+                utterance.voice = selectedVoice;
+            }
+            
+            // Set to exact default pitch/rate to match the classic Google Assistant voice
+            utterance.rate = 1.0; 
+            utterance.pitch = 1.0;
+            
+            utterance.onend = () => {
+                icon.classList.replace('ph-stop', 'ph-speaker-high');
+                btn.classList.remove('text-indigo-600', 'dark:text-indigo-400');
+            };
+            
+            icon.classList.replace('ph-speaker-high', 'ph-stop');
+            btn.classList.add('text-indigo-600', 'dark:text-indigo-400');
+            
+            // Play using local device hardware
+            window.speechSynthesis.speak(utterance);
+        }
+      }
+      else if (action === 'toggleMic') {
+        const btn = document.getElementById('mic-btn');
+        if (!window.SpeechRecognition && !window.webkitSpeechRecognition) {
+            alert("Voice recognition is not supported in this browser.");
+            return;
+        }
+        
+        if (window.isRecording) {
+            if (window.recognition) window.recognition.stop();
+            return;
+        }
+        
+        const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+        window.recognition = new SpeechRec();
+        window.recognition.continuous = false;
+        window.recognition.interimResults = true;
+        
+        window.recognition.onstart = () => {
+            window.isRecording = true;
+            btn.classList.add('text-red-500', 'animate-pulse');
+            chatInput.placeholder = "Listening...";
+        };
+        
+        window.recognition.onresult = (event) => {
+            const transcript = Array.from(event.results)
+                .map(result => result[0])
+                .map(result => result.transcript)
+                .join('');
+            chatInput.value = transcript;
+        };
+        
+        window.recognition.onend = () => {
+            window.isRecording = false;
+            btn.classList.remove('text-red-500', 'animate-pulse');
+            chatInput.placeholder = "Ask Nexus AI... (or type 'play lo-fi')";
+        };
+        
+        window.recognition.start();
+      }
+      else if (action === 'clearChat') {
+        if (confirm("Are you sure you want to clear your chat history?")) {
+            localStorage.removeItem('nexus_chat_html');
+            localStorage.removeItem('nexus_chat_context');
+            window.location.reload();
+        }
       }
     });
 
