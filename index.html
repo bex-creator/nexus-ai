@@ -414,7 +414,8 @@
   <!-- Logic Script -->
   <script>
     const apiKey = ""; // Provided by execution environment
-    const USER_GEMINI_KEY = ""; // 🔑 PASTE YOUR FREE GEMINI API KEY HERE FOR GITHUB PAGES (aistudio.google.com)
+    const USER_GEMINI_KEY = ""; // Optional: Google Gemini Key
+    const USER_POLLINATIONS_KEY = "pk_r7MZW42zHynPBeBm"; // 🔑 YOUR POLLINATIONS API KEY
     let currentAudio = null; // Track current playing TTS audio
     let systemVoices = [];
 
@@ -791,7 +792,7 @@
         }
     }
 
-    // --- The Core AI Engine Object (Using Pollinations API) ---
+    // --- The Core AI Engine Object (Gemini Primary, Pollinations Fallback) ---
     window.aiEngine = {
         isProcessing: false,
         queue: [],
@@ -808,87 +809,172 @@
                     currentInstruction += "\n\n*** CRITICAL STITCHING REQUIREMENT ***\nYour previous response was cut off. You MUST pick up EXACTLY where the text stopped. Do NOT output standard greeting text, introductory lines, or repeat code headers that are already completed. Begin streaming immediately with the missing/remaining syntax chunks so the user can copy/paste it as one seamless block.";
                 }
 
-                let apiMessages = [
-                    { role: "system", content: currentInstruction },
-                    ...task.messages
-                ];
-
+                // Properly route the correct API key
+                const activeGeminiKey = (typeof USER_GEMINI_KEY !== 'undefined' && USER_GEMINI_KEY.startsWith("AIza")) ? USER_GEMINI_KEY : (typeof apiKey !== 'undefined' && apiKey ? apiKey : "");
+                const activePolliKey = typeof USER_POLLINATIONS_KEY !== 'undefined' && USER_POLLINATIONS_KEY ? USER_POLLINATIONS_KEY : "";
+                
                 let answer = "";
                 let success = false;
                 let lastErr = "";
 
-                // Retry logic built-in
-                for (let i = 0; i < 3; i++) {
+                // --- STRATEGY 1: Official Gemini API (Lightning Fast, Never Congested) ---
+                if (activeGeminiKey) {
                     try {
-                        const response = await fetch("https://text.pollinations.ai/", {
-                            method: "POST",
-                            headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({
-                                messages: apiMessages,
-                                model: "openai", 
-                                stream: true,
-                                max_tokens: 8192
-                            })
-                        });
-
-                        if (!response.ok) {
-                            throw new Error(`HTTP ${response.status}`);
-                        }
-
-                        const reader = response.body.getReader();
-                        const decoder = new TextDecoder('utf-8');
-                        let lastUpdate = 0; 
-                        
-                        while (true) {
-                            const { done, value } = await reader.read();
-                            if (done) break;
+                        const geminiContents = [];
+                        for (const msg of task.messages) {
+                            if (msg.role === 'system') continue; 
+                            const role = msg.role === 'assistant' ? 'model' : 'user';
+                            const parts = [];
                             
-                            const chunk = decoder.decode(value, { stream: true });
-                            const lines = chunk.split('\n'); 
-                            
-                            for (const line of lines) {
-                                if (line.startsWith('data: ') && line !== 'data: [DONE]') {
-                                    try {
-                                        const jsonParse = JSON.parse(line.slice(6));
-                                        if (jsonParse.choices && jsonParse.choices[0].delta && jsonParse.choices[0].delta.content) {
-                                            answer += jsonParse.choices[0].delta.content;
-                                            
-                                            let displayAnswer = answer;
-                                            
-                                            // Clean up potential ad injections from free api
-                                            if (displayAnswer.includes('--- **Support Pollinations')) displayAnswer = displayAnswer.split('--- **Support Pollinations')[0];
-                                            if (displayAnswer.includes('🌸 **Ad** 🌸')) displayAnswer = displayAnswer.split('🌸 **Ad** 🌸')[0];
-                                            if (displayAnswer.includes('Powered by Pollinations')) displayAnswer = displayAnswer.split('Powered by Pollinations')[0];
-                                            
-                                            if (displayAnswer.toLowerCase().startsWith('nexus:')) displayAnswer = displayAnswer.substring(6).trimStart();
-                                            if (displayAnswer.toLowerCase().startsWith('assistant:')) displayAnswer = displayAnswer.substring(10).trimStart();
-                                            
-                                            // UI Throttling: redraw the heavy markdown parser every ~30ms
-                                            if (Date.now() - lastUpdate > 30) {
-                                                handleTokenUpdate(task.id, (task.prefixContent || "") + displayAnswer, task.isContinuation, task.baseText);
-                                                lastUpdate = Date.now();
-                                            }
-                                        }
-                                    } catch (err) {
-                                        // Ignore parse errors on incomplete chunks
+                            if (typeof msg.content === 'string') {
+                                parts.push({ text: msg.content });
+                            } else if (Array.isArray(msg.content)) {
+                                for (const part of msg.content) {
+                                    if (part.type === 'text') parts.push({ text: part.text });
+                                    if (part.type === 'image_url') {
+                                        const match = part.image_url.url.match(/^data:(image\/[a-zA-Z+]+);base64,(.+)$/);
+                                        if (match) parts.push({ inlineData: { mimeType: match[1], data: match[2] } });
                                     }
                                 }
                             }
+                            geminiContents.push({ role, parts });
                         }
+
+                        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${activeGeminiKey}`, {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                                systemInstruction: { parts: [{ text: currentInstruction }] },
+                                contents: geminiContents,
+                                generationConfig: { maxOutputTokens: 8192 }
+                            })
+                        });
+
+                        if (!response.ok) throw new Error(`Gemini HTTP ${response.status}`);
                         
-                        if (answer.length > 0) {
+                        const data = await response.json();
+                        answer = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+                        
+                        if (answer) {
                             success = true;
-                            break;
-                        } else {
-                            throw new Error("Stream returned empty");
+                            // Faking a quick stream for UI smoothness
+                            handleTokenUpdate(task.id, (task.prefixContent || "") + answer, task.isContinuation, task.baseText);
                         }
                     } catch (e) {
-                        lastErr = e.message;
-                        await new Promise(r => setTimeout(r, 500)); 
+                        console.warn("Gemini API fallback to public nodes...", e);
                     }
                 }
 
-                if (!success) throw new Error("Cloud Node Congested: " + lastErr);
+                // --- STRATEGY 2: Pollinations AI Nodes (Using Auth Key if provided) ---
+                if (!success) {
+                    let apiMessages = [
+                        { role: "system", content: currentInstruction },
+                        ...task.messages
+                    ];
+
+                    const fallbackStrategies = [
+                        { type: "post_stream", model: "openai" },
+                        { type: "post_stream", model: "claude" },
+                        { type: "get_raw", model: "openai" } 
+                    ];
+
+                    // Attach Pollinations key if available to bypass rate limits
+                    const polliHeaders = { "Content-Type": "application/json" };
+                    if (activePolliKey) {
+                        polliHeaders["Authorization"] = `Bearer ${activePolliKey}`;
+                    }
+
+                    for (let i = 0; i < fallbackStrategies.length; i++) {
+                        try {
+                            const strategy = fallbackStrategies[i];
+                            
+                            if (strategy.type === "post_stream") {
+                                const response = await fetch("https://text.pollinations.ai/", {
+                                    method: "POST",
+                                    headers: polliHeaders,
+                                    body: JSON.stringify({
+                                        messages: apiMessages,
+                                        model: strategy.model, 
+                                        stream: true,
+                                        seed: Math.floor(Math.random() * 100000)
+                                    })
+                                });
+
+                                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+                                const reader = response.body.getReader();
+                                const decoder = new TextDecoder('utf-8');
+                                let lastUpdate = 0; 
+                                
+                                while (true) {
+                                    const { done, value } = await reader.read();
+                                    if (done) break;
+                                    
+                                    const chunk = decoder.decode(value, { stream: true });
+                                    const lines = chunk.split('\n'); 
+                                    
+                                    for (const line of lines) {
+                                        if (line.startsWith('data: ') && line !== 'data: [DONE]') {
+                                            try {
+                                                const jsonParse = JSON.parse(line.slice(6));
+                                                if (jsonParse.choices?.[0]?.delta?.content) {
+                                                    answer += jsonParse.choices[0].delta.content;
+                                                    
+                                                    let displayAnswer = answer;
+                                                    if (displayAnswer.includes('--- **Support Pollinations')) displayAnswer = displayAnswer.split('--- **Support Pollinations')[0];
+                                                    if (displayAnswer.includes('🌸 **Ad** 🌸')) displayAnswer = displayAnswer.split('🌸 **Ad** 🌸')[0];
+                                                    if (displayAnswer.toLowerCase().startsWith('nexus:')) displayAnswer = displayAnswer.substring(6).trimStart();
+                                                    if (displayAnswer.toLowerCase().startsWith('assistant:')) displayAnswer = displayAnswer.substring(10).trimStart();
+                                                    
+                                                    if (Date.now() - lastUpdate > 30) {
+                                                        handleTokenUpdate(task.id, (task.prefixContent || "") + displayAnswer, task.isContinuation, task.baseText);
+                                                        lastUpdate = Date.now();
+                                                    }
+                                                }
+                                            } catch (err) {}
+                                        }
+                                    }
+                                }
+                            } else if (strategy.type === "get_raw") {
+                                let promptString = apiMessages.map(m => {
+                                    let content = typeof m.content === 'string' ? m.content : JSON.stringify(m.content);
+                                    return `${m.role.toUpperCase()}: ${content}`;
+                                }).join('\n\n') + '\n\nASSISTANT:';
+                                
+                                if (promptString.length > 2000) promptString = "... " + promptString.slice(-2000); 
+                                
+                                const getHeaders = activePolliKey ? { "Authorization": `Bearer ${activePolliKey}` } : {};
+                                
+                                const response = await fetch(`https://text.pollinations.ai/${encodeURIComponent(promptString)}?model=${strategy.model}&_=${Date.now()}`, {
+                                    headers: getHeaders
+                                });
+                                
+                                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                                answer = await response.text();
+                                
+                                let displayAnswer = answer;
+                                if (displayAnswer.includes('--- **Support Pollinations')) displayAnswer = displayAnswer.split('--- **Support Pollinations')[0];
+                                if (displayAnswer.includes('🌸 **Ad** 🌸')) displayAnswer = displayAnswer.split('🌸 **Ad** 🌸')[0];
+                                if (displayAnswer.toLowerCase().startsWith('nexus:')) displayAnswer = displayAnswer.substring(6).trimStart();
+                                if (displayAnswer.toLowerCase().startsWith('assistant:')) displayAnswer = displayAnswer.substring(10).trimStart();
+                                
+                                handleTokenUpdate(task.id, (task.prefixContent || "") + displayAnswer, task.isContinuation, task.baseText);
+                            }
+                            
+                            if (answer.trim().length > 0) {
+                                success = true;
+                                break;
+                            } else {
+                                throw new Error("Stream returned empty");
+                            }
+                        } catch (e) {
+                            lastErr = e.message;
+                            await new Promise(r => setTimeout(r, 1000)); // Fast retry
+                        }
+                    }
+                }
+
+                if (!success) throw new Error("All AI nodes currently congested. Please check your API key or try again in a moment. (" + lastErr + ")");
 
                 // Final cleanup
                 if (answer.includes('--- **Support Pollinations')) answer = answer.split('--- **Support Pollinations')[0];
