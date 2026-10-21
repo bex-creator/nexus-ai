@@ -42,9 +42,11 @@
         function isAuthorized() {
             const host = window.location.hostname.toLowerCase();
 
-            const path = window.location.pathname
-                .toLowerCase()
-                .replace(/\/+$/, "") || "/";
+            // Normalize the path without relying on an escaped regex inside the template.
+            let path = window.location.pathname.toLowerCase();
+            while (path.length > 1 && path.endsWith("/")) {
+                path = path.slice(0, -1);
+            }
 
             const isApprovedGitHubPage =
                 host === "bex-creator.github.io" &&
@@ -116,16 +118,16 @@
                 document.body.innerHTML =
                     '<main class="locked-message">' +
                         '<h2>App failed to load</h2>' +
-                        '<p>Check the browser console for the error.</p>' +
+                        '<p>The protected HTML could not be decoded or opened.</p>' +
+                        '<p>Open Developer Tools (F12) and check Console for details.</p>' +
                     '</main>';
             }
         }
 
-        document.addEventListener(
-            "DOMContentLoaded",
-            loadProtectedContent,
-            { once: true }
-        );
+        // This script is placed at the end of the body, so the wrapper is ready.
+        // Run immediately: waiting for DOMContentLoaded before document.open/write
+        // can leave some hosted builds showing a blank page.
+        loadProtectedContent();
     })();
     </script>
 </body>
