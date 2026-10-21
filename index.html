@@ -30,9 +30,11 @@
     (function () {
         "use strict";
 
+        // GitHub Pages project paths (compared case-insensitively).
         const allowedProjects = [
             "/nexus-store",
             "/chat",
+            "/chat-space",
             "/parkour",
             "/nexus-ai"
         ];
@@ -42,7 +44,7 @@
 
             const path = window.location.pathname
                 .toLowerCase()
-                .replace(/\\/+$/, "") || "/";
+                .replace(/\/+$/, "") || "/";
 
             const isApprovedGitHubPage =
                 host === "bex-creator.github.io" &&
